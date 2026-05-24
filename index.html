@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>番组日历</title>
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/style.css?v=2">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0071e3">
 </head>
 <body>
 
@@ -17,19 +19,19 @@
   </div>
 </header>
 
-<div class="toolbar">
+  <div class="toolbar">
   <div class="toolbar-row">
-    <div class="year-nav">
-      <button id="yearPrev" class="icon-btn">&lsaquo;</button>
-      <span id="yearDisplay" class="year-display">2025</span>
-      <button id="yearNext" class="icon-btn">&rsaquo;</button>
-    </div>
-    <div class="season-group">
-      <button class="sbtn" data-s="winter">1月</button>
-      <button class="sbtn" data-s="spring">4月</button>
-      <button class="sbtn" data-s="summer">7月</button>
-      <button class="sbtn" data-s="fall">10月</button>
-    </div>
+    <button id="prevSeason" class="nav-btn" title="上一季">‹</button>
+    <select id="yearSelect" class="sel"></select>
+    <span class="sel-sep">年</span>
+    <select id="seasonSelect" class="sel">
+      <option value="winter">冬季</option>
+      <option value="spring">春季</option>
+      <option value="summer">夏季</option>
+      <option value="fall">秋季</option>
+    </select>
+    <button id="nextSeason" class="nav-btn" title="下一季">›</button>
+    <button class="today-btn" id="gotoToday">今天</button>
     <div class="search-bar">
       <input type="text" id="searchInput" class="search-input" placeholder="搜索番剧...">
       <button id="searchClear" class="search-clear">&times;</button>
@@ -55,6 +57,6 @@
 </div>
 
 <script>var _DATA = {};</script>
-<script src="/script.js"></script>
+<script src="/script.js?v=3"></script>
 </body>
 </html>

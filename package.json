@@ -1,0 +1,14 @@
+{
+  "name": "ani-calendar",
+  "version": "1.0.0",
+  "description": "番组日历 - 新番资讯 · 每日追番",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "fetch-data": "node fetch_from_anilist.js",
+    "fetch-images": "node fetch_images.js"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  }
+}

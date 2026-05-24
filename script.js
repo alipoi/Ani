@@ -7,6 +7,7 @@ var S = {
 
 var MONTH = { winter:'01', spring:'04', summer:'07', fall:'10' };
 var DAYS = ['周一','周二','周三','周四','周五','周六','周日'];
+var SEASON_ORDER = ['winter','spring','summer','fall'];
 
 function imgPath(a) {
   if (!a || !a.title) return '';
@@ -15,23 +16,77 @@ function imgPath(a) {
 }
 
 function updateUrl() {
-  var m = { winter:'01', spring:'04', summer:'07', fall:'10' }[S.season];
+  var m = MONTH[S.season];
   var path = '/' + S.year + m + '/';
-  if (window.location.pathname !== path) {
+  var search = getSearchParam();
+  if (search) path += '?q=' + encodeURIComponent(search);
+  if (window.location.pathname + window.location.search !== path) {
     window.history.replaceState(null, '', path);
   }
 }
 
-function loadData(y, s, cb) {
+function syncSelects() {
+  document.getElementById('yearSelect').value = S.year;
+  document.getElementById('seasonSelect').value = S.season;
+}
+
+function nextSeason() {
+  var idx = SEASON_ORDER.indexOf(S.season);
+  if (idx < 3) { S.season = SEASON_ORDER[idx + 1]; }
+  else { S.season = 'winter'; S.year++; if (S.year > 2030) S.year = 2030; }
+  syncSelects();
+  loadData(S.year, S.season);
+}
+
+function prevSeason() {
+  var idx = SEASON_ORDER.indexOf(S.season);
+  if (idx > 0) { S.season = SEASON_ORDER[idx - 1]; }
+  else { S.season = 'fall'; S.year--; if (S.year < 2015) S.year = 2015; }
+  syncSelects();
+  loadData(S.year, S.season);
+}
+
+function getSearchParam() {
+  var m = window.location.search.match(/[?&]q=([^&]*)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+
+function loadData(y, s) {
   var key = y + MONTH[s];
   S.key = key;
   updateUrl();
-  if (_DATA[key]) { cb(normalizeAll(_DATA[key][s] || [])); return; }
-  var sc = document.createElement('script');
-  sc.src = '/data/' + key + '.js';
-  sc.onload = function(){ cb(normalizeAll(_DATA[key] ? _DATA[key][s] || [] : [])); };
-  sc.onerror = function(){ cb([]); };
-  document.head.appendChild(sc);
+  showLoading();
+
+  if (_DATA && _DATA[key]) {
+    render(normalizeAll(_DATA[key][s] || []));
+    return;
+  }
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/api/data/' + key + '/' + s, true);
+  xhr.onload = function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      try { render(JSON.parse(xhr.responseText)); } catch(e) { showError('数据解析失败'); }
+    } else {
+      showError('暂无该季度数据');
+    }
+  };
+  xhr.onerror = function() {
+    showError('加载失败，请刷新页面重试');
+  };
+  xhr.send();
+}
+
+function showLoading() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('empty').style.display = 'none';
+  document.getElementById('list').innerHTML = '';
+}
+
+function showError(msg) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('empty').style.display = 'block';
+  document.getElementById('empty').textContent = msg;
 }
 
 function normalizeAll(arr) {
@@ -40,14 +95,20 @@ function normalizeAll(arr) {
   return arr;
 }
 
-// Search / filter
 var searchInput = document.getElementById('searchInput');
 var searchClear = document.getElementById('searchClear');
 
-searchInput.addEventListener('input', function(){ applyFilter(); toggleClear(); });
-searchClear.addEventListener('click', function(){ searchInput.value = ''; toggleClear(); applyFilter(); searchInput.focus(); });
+searchInput.addEventListener('input', function(){ applyFilter(); toggleClear(); saveSearchParam(); });
+searchClear.addEventListener('click', function(){ searchInput.value = ''; toggleClear(); applyFilter(); searchInput.focus(); saveSearchParam(); });
 
 function toggleClear() { searchClear.style.display = searchInput.value ? 'inline-flex' : 'none'; }
+
+function saveSearchParam() {
+  var term = searchInput.value.trim();
+  var base = window.location.pathname;
+  var newUrl = term ? base + '?q=' + encodeURIComponent(term) : base;
+  window.history.replaceState(null, '', newUrl);
+}
 
 function applyFilter() {
   var term = searchInput.value.trim().toLowerCase();
@@ -88,8 +149,15 @@ function normalize(a) {
 }
 
 function render(list) {
-  S.list = list;
+  S.list = normalizeAll(list);
+  // Restore search from URL after data loads
+  var q = getSearchParam();
+  if (q && !searchInput.value) {
+    searchInput.value = q;
+    toggleClear();
+  }
   applyFilter();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function displayList(list) {
@@ -121,20 +189,60 @@ function displayList(list) {
     h += '</div></div>';
   });
   el.innerHTML = h;
+  focusFirstCard();
 }
+
+var _focusedIndex = -1;
 
 function cardHtml(a) {
   var img = imgPath(a);
-  var h = '<div class="card" onclick="openDetail(\'' + esc(a.id) + '\')">';
+  var h = '<div class="card" onclick="openDetail(\'' + esc(a.id) + '\')" data-id="' + esc(a.id) + '">';
   h += '<div class="card-img">';
+  h += '<div class="card-img-placeholder"></div>';
   if (img) {
-    h += '<img src="' + img + '" alt="' + esc(a.title) + '" loading="lazy" onerror="this.style.display=\'none\'">';
+    h += '<img src="' + img + '" alt="' + esc(a.title) + '" loading="lazy" onerror="this.parentElement.classList.add(\'img-error\')">';
   }
   h += '</div>';
   h += '<div class="card-title">' + esc(a.title) + '</div>';
   h += '</div>';
   return h;
 }
+
+function focusFirstCard() {
+  _focusedIndex = -1;
+}
+
+function focusCard(dir) {
+  var cards = document.querySelectorAll('.card');
+  if (!cards.length) return;
+  _focusedIndex = Math.max(0, Math.min(cards.length - 1, _focusedIndex + dir));
+  cards.forEach(function(c, i) {
+    c.classList.toggle('card-focused', i === _focusedIndex);
+  });
+  cards[_focusedIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function openFocusedCard() {
+  var cards = document.querySelectorAll('.card');
+  if (_focusedIndex >= 0 && _focusedIndex < cards.length) {
+    cards[_focusedIndex].click();
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (document.getElementById('overlay').classList.contains('open')) {
+    if (e.key === 'Escape') closeOverlay();
+    return;
+  }
+  switch (e.key) {
+    case 'ArrowRight':
+    case 'ArrowDown': e.preventDefault(); focusCard(1); break;
+    case 'ArrowLeft':
+    case 'ArrowUp': e.preventDefault(); focusCard(-1); break;
+    case 'Enter': e.preventDefault(); openFocusedCard(); break;
+    case 'Escape': if (searchInput.value) { searchInput.value = ''; toggleClear(); applyFilter(); saveSearchParam(); searchInput.blur(); } break;
+  }
+});
 
 function openDetail(id) {
   var a = null;
@@ -162,7 +270,7 @@ function openDetail(id) {
   }
 
   document.getElementById('overlayContent').innerHTML = h;
-  document.getElementById('overlay').style.display = 'block';
+  document.getElementById('overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 
@@ -195,13 +303,12 @@ function formatContent(content) {
 }
 
 function closeOverlay() {
-  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('overlay').classList.remove('open');
   document.body.style.overflow = '';
 }
 
 document.getElementById('overlayClose').onclick = closeOverlay;
 document.getElementById('overlay').onclick = function(e){ if(e.target===this) closeOverlay(); };
-document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeOverlay(); });
 
 function esc(s) {
   if (!s) return '';
@@ -210,25 +317,43 @@ function esc(s) {
   return d.innerHTML;
 }
 
-// Navigation
-document.querySelectorAll('.sbtn').forEach(function(b){
-  b.onclick = function(){
-    S.season = b.dataset.s;
-    document.querySelectorAll('.sbtn').forEach(function(x){ x.classList.toggle('on', x.dataset.s === S.season); });
-    loadData(S.year, S.season, render);
-  };
-});
-
-function updateYear() {
-  document.getElementById('yearDisplay').textContent = S.year;
-  loadData(S.year, S.season, render);
+function loadSeasonView() {
+  syncSelects();
+  loadData(S.year, S.season);
 }
-document.getElementById('yearPrev').onclick = function(){
-  if (S.year > 2015) { S.year--; updateYear(); }
+
+document.getElementById('prevSeason').onclick = prevSeason;
+document.getElementById('nextSeason').onclick = nextSeason;
+document.getElementById('gotoToday').onclick = function(){
+  var now = new Date();
+  var m = now.getMonth() + 1;
+  S.year = now.getFullYear();
+  S.season = m <= 3 ? 'winter' : m <= 6 ? 'spring' : m <= 9 ? 'summer' : 'fall';
+  loadSeasonView();
 };
-document.getElementById('yearNext').onclick = function(){
-  if (S.year < 2030) { S.year++; updateYear(); }
+
+document.getElementById('yearSelect').onchange = function(){
+  S.year = parseInt(this.value);
+  loadData(S.year, S.season);
 };
+document.getElementById('seasonSelect').onchange = function(){
+  S.season = this.value;
+  loadData(S.year, S.season);
+};
+
+function populateYearSelect() {
+  var sel = document.getElementById('yearSelect');
+  for (var y = 2030; y >= 2015; y--) {
+    var opt = document.createElement('option');
+    opt.value = y; opt.textContent = y;
+    sel.appendChild(opt);
+  }
+}
+
+// service worker registration temporarily disabled for stability
+// if ('serviceWorker' in navigator) {
+//   navigator.serviceWorker.register('/sw.js');
+// }
 
 function init(){
   var now = new Date();
@@ -247,10 +372,14 @@ function init(){
     S.season = m <= 3 ? 'winter' : m <= 6 ? 'spring' : m <= 9 ? 'summer' : 'fall';
   }
 
-  document.getElementById('yearDisplay').textContent = S.year;
-  document.querySelectorAll('.sbtn').forEach(function(b){
-    b.classList.toggle('on', b.dataset.s === S.season);
-  });
-  loadData(S.year, S.season, render);
+  populateYearSelect();
+  syncSelects();
+
+  // Restore search from URL on init
+  var q = getSearchParam();
+  if (q) searchInput.value = q;
+  toggleClear();
+
+  loadData(S.year, S.season);
 }
 init();

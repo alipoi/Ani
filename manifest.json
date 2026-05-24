@@ -1,0 +1,10 @@
+{
+  "name": "番组日历",
+  "short_name": "番组日历",
+  "description": "新番资讯 · 每日追番",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f5f7",
+  "theme_color": "#0071e3",
+  "icons": []
+}

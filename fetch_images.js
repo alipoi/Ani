@@ -32,10 +32,10 @@ var missing = titles.filter(function(t) { return !existing[t] && !existing[sanit
 console.log('Season ' + season + ': ' + titles.length + ' entries, ' + Object.keys(existing).length + ' images exist, ' + missing.length + ' missing');
 if (missing.length === 0) { console.log('All images already present!'); process.exit(0); }
 
-var pageUrl = 'http://yuc.wiki/' + season + '/';
+var pageUrl = 'https://yuc.wiki/' + season + '/';
 console.log('Fetching ' + pageUrl + ' ...');
 
-http.get(pageUrl, function(res) {
+https.get(pageUrl, function(res) {
   if (res.statusCode !== 200) {
     console.log('HTTP ' + res.statusCode);
     process.exit(1);
