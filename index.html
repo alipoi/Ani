@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>番组日历</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div class="bg"></div>
+
+<header class="header">
+  <div class="header-inner">
+    <h1 class="logo">番组日历</h1>
+    <p class="logo-sub">新番资讯 · 每日追番</p>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="toolbar-row">
+    <div class="year-nav">
+      <button id="yearPrev" class="icon-btn">&lsaquo;</button>
+      <span id="yearDisplay" class="year-display">2025</span>
+      <button id="yearNext" class="icon-btn">&rsaquo;</button>
+    </div>
+    <div class="season-group">
+      <button class="sbtn" data-s="winter">1月</button>
+      <button class="sbtn" data-s="spring">4月</button>
+      <button class="sbtn" data-s="summer">7月</button>
+      <button class="sbtn" data-s="fall">10月</button>
+    </div>
+    <div class="search-bar">
+      <input type="text" id="searchInput" class="search-input" placeholder="搜索番剧...">
+      <button id="searchClear" class="search-clear">&times;</button>
+    </div>
+  </div>
+</div>
+
+<main class="main">
+  <div id="list" class="list"></div>
+  <div id="loading" class="loading">加载中...</div>
+  <div id="empty" class="empty">暂无数据</div>
+</main>
+
+<footer class="footer">
+  <p>番组日历 · 数据编辑于 <code>data/</code> 目录</p>
+</footer>
+
+<div id="overlay" class="overlay">
+  <div class="overlay-inner">
+    <button class="overlay-close" id="overlayClose">&times;</button>
+    <div id="overlayContent"></div>
+  </div>
+</div>
+
+<script>var _DATA = {};</script>
+<script src="/script.js"></script>
+</body>
+</html>
