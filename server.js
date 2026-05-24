@@ -49,6 +49,13 @@ http.createServer(function(req, res) {
     .replace(/\x00SLASH\x00/g, '%2F')
     .replace(/:/g, '\uFF1A');
   var filePath = path.join(root, urlPath === '/' ? 'index.html' : urlPath);
+  filePath = path.resolve(filePath);
+
+  // prevent path traversal outside project root
+  if (filePath.indexOf(root) !== 0) {
+    res.writeHead(403);
+    return res.end();
+  }
 
   console.log(req.url, '->', filePath);
 

@@ -14,6 +14,36 @@ function sanitizeName(s) {
   return s.replace(/[\n\r]/g, '').replace(/[:]/g, '\uFF1A').replace(/[\/]/g, '%2F').replace(/[\?\*"<>\|]/g, '');
 }
 
+function jpegDimensions(fp) {
+  try {
+    var fd = fs.openSync(fp, 'r');
+    var buf = Buffer.alloc(65536);
+    var bytesRead = fs.readSync(fd, buf, 0, 65536, 0);
+    fs.closeSync(fd);
+    if (bytesRead < 4 || buf[0] !== 0xFF || buf[1] !== 0xD8) return null;
+    var i = 2;
+    while (i < bytesRead - 1) {
+      if (buf[i] !== 0xFF) return null;
+      while (buf[i] === 0xFF) i++;
+      var marker = buf[i];
+      i++;
+      if (marker === 0x00 || marker === 0xFF) return null;
+      if (marker === 0xD9 || marker === 0xDA) return null;
+      if (bytesRead < i + 1) return null;
+      var len = (buf[i] << 8) | buf[i + 1];
+      if (len < 2) return null;
+      if ((marker >= 0xC0 && marker <= 0xC3) || (marker >= 0xC5 && marker <= 0xCB) || (marker >= 0xCD && marker <= 0xCF)) {
+        if (bytesRead < i + 2 + len) return null;
+        var h = (buf[i + 5] << 8) | buf[i + 6];
+        var w = (buf[i + 7] << 8) | buf[i + 8];
+        return { w: w, h: h };
+      }
+      i += 2 + len;
+    }
+    return null;
+  } catch(e) { return null; }
+}
+
 function norm(s) { return (s || '').replace(/\s+/g, '').toLowerCase(); }
 
 function lcs(a, b) {
@@ -114,8 +144,16 @@ function download(url, fp) {
       ws.on('finish', function() {
         ws.close();
         var size = fs.statSync(fp).size;
-        if (size < 1000) { try { fs.unlinkSync(fp); } catch(e) {} fail(new Error('too small: ' + size)); }
-        else ok(size);
+      if (size < 1000) { try { fs.unlinkSync(fp); } catch(e) {} fail(new Error('too small: ' + size)); }
+      else {
+        var dims = jpegDimensions(fp);
+        if (dims && (dims.w < 100 || dims.h < 100)) {
+          try { fs.unlinkSync(fp); } catch(e) {}
+          fail(new Error('tiny dimensions: ' + dims.w + 'x' + dims.h));
+        } else {
+          ok(size);
+        }
+      }
       });
       ws.on('error', function(e) { try { fs.unlinkSync(fp); } catch(e2) {} fail(e); });
     }).on('error', fail);
