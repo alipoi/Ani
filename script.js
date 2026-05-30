@@ -16,6 +16,7 @@ var empty = document.getElementById('empty');
 var overlay = document.getElementById('overlay');
 var overlayContent = document.getElementById('overlayContent');
 var overlayClose = document.getElementById('overlayClose');
+var statsBar = document.getElementById('statsBar');
 
 function imgName(t) {
   return t.replace(/:/g, '\uFF1A').replace(/[/]/g, '%2F').replace(/[\?\*"<>\|]/g, '');
@@ -45,7 +46,7 @@ function goSeason(d) {
   var i = SEASON_ORDER.indexOf(S.season);
   if (d > 0) S.season = i < 3 ? SEASON_ORDER[i+1] : (S.year++, 'winter');
   else S.season = i > 0 ? SEASON_ORDER[i-1] : (S.year--, 'fall');
-  if (S.year > 2030) S.year = 2030;
+  if (S.year > new Date().getFullYear()) S.year = new Date().getFullYear();
   if (S.year < 2015) S.year = 2015;
   loadView();
 }
@@ -133,6 +134,10 @@ function render(list) {
   }
   empty.style.display = 'none';
 
+  statsBar.innerHTML = '<span class="stats-icon">📅</span> ' + S.year + '年' + SEASON_LABEL[S.season] +
+    (term ? ' · 搜索「' + esc(term) + '」找到 <span class="stats-num">' + f.length + '</span> 部' :
+     ' · 共 <span class="stats-num">' + f.length + '</span> 部番剧');
+
   var byDay = {};
   DAYS.forEach(function(d) { byDay[d] = []; });
   f.forEach(function(a) {
@@ -144,19 +149,39 @@ function render(list) {
   DAYS.forEach(function(d) {
     var items = byDay[d];
     if (!items.length) return;
-    h += '<div class="day-section"><div class="day-h">' + d + '</div><div class="card-list">';
+    h += '<div class="day-section"><div class="day-h">' + d + '<span class="day-count">' + items.length + '</span></div><div class="card-list">';
     items.forEach(function(a) { h += cardHTML(a); });
     h += '</div></div>';
   });
   listEl.innerHTML = h;
+  scrollToToday();
+}
+
+function scrollToToday() {
+  if (searchInput.value.trim()) return;
+  var dayIndex = new Date().getDay();
+  var map = ['周日','周一','周二','周三','周四','周五','周六'];
+  var today = map[dayIndex];
+  var sections = document.querySelectorAll('.day-section');
+  for (var i = 0; i < sections.length; i++) {
+    var dh = sections[i].querySelector('.day-h');
+    if (dh && dh.textContent.trim() === today) {
+      sections[i].classList.add('current');
+      setTimeout(function(el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100, sections[i]);
+      break;
+    }
+  }
 }
 
 function cardHTML(a) {
   var fav = isFav(a.id);
   var img = imgPath(a);
+  var fb = a.coverImage ? ' onerror="this.src=\'' + esc(a.coverImage) + '\'"' : '';
   return '<div class="card" data-id="' + esc(a.id) + '">' +
     '<div class="card-img">' +
-    (img ? '<img src="' + img + '" alt="' + esc(a.title) + '">' : '') +
+    (img && a.coverImage ? '<img src="' + img + '" alt="' + esc(a.title) + '" loading="lazy" class="lazy-fade"' + fb + '>' : '') +
     '</div>' +
     '<button class="fav-btn' + (fav ? ' on' : '') + '" data-id="' + esc(a.id) + '">' + (fav ? '★' : '☆') + '</button>' +
     '<div class="card-title">' + esc(a.title) + '</div>' +
@@ -174,8 +199,11 @@ listEl.addEventListener('click', function(e) {
 
 function openDetail(a) {
   var img = imgPath(a);
+  var fb = a.coverImage ? ' onerror="this.src=\'' + esc(a.coverImage) + '\'"' : '';
   var h = '<div class="detail-top">' +
-    (img ? '<div class="detail-img"><img src="' + img + '" alt="' + esc(a.title) + '"></div>' : '') +
+    '<div class="detail-img">' +
+    (img && a.coverImage ? '<img src="' + img + '" alt="' + esc(a.title) + '"' + fb + '>' : '') +
+    '</div>' +
     '<div class="detail-info"><div class="detail-title">' + esc(a.title) + '</div>' +
     (a.titleJp ? '<div class="detail-title-jp">' + esc(a.titleJp) + '</div>' : '');
   if (a.airTime) {
@@ -204,6 +232,10 @@ function fmt(c) {
         out += '<div class="detail-field"><span class="field-label">' + esc(label) + '</span>';
         val.split('/').forEach(function(t) { if (t.trim()) out += '<span class="field-tag">' + esc(t.trim()) + '</span>'; });
         out += '</div>';
+      } else if (label === '官网：') {
+        var url = val.trim();
+        if (url.indexOf('http') !== 0) url = 'https://' + url;
+        out += '<div class="detail-field"><span class="field-label">官网：</span><a href="' + esc(url) + '" target="_blank" rel="noopener" class="field-link">' + esc(val.trim()) + '</a></div>';
       } else {
         out += '<div class="detail-field"><span class="field-label">' + esc(label) + '</span><span class="field-value">' + esc(val) + '</span></div>';
       }
@@ -248,7 +280,8 @@ yearSelect.onchange = function() { S.year = parseInt(this.value); loadView(); };
 seasonSelect.onchange = function() { S.season = this.value; loadView(); };
 
 function popYear() {
-  for (var y = 2030; y >= 2015; y--) {
+  var cur = new Date().getFullYear();
+  for (var y = cur; y >= 2015; y--) {
     var o = document.createElement('option');
     o.value = y; o.textContent = y;
     yearSelect.appendChild(o);
@@ -265,6 +298,21 @@ function toggleFav(id, btn) {
   setFavs(a);
   if (btn) { btn.textContent = i < 0 ? '★' : '☆'; btn.classList.toggle('on', i < 0); }
 }
+
+var goTop = document.getElementById('goTop');
+window.addEventListener('scroll', function() {
+  goTop.classList.toggle('show', window.scrollY > 400);
+});
+goTop.onclick = function() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+var kbdHint = document.getElementById('kbdHint');
+if (localStorage.getItem('kbdHintClosed')) kbdHint.style.display = 'none';
+kbdHint.onclick = function() {
+  kbdHint.style.display = 'none';
+  localStorage.setItem('kbdHintClosed', '1');
+};
 
 function applyTheme() {
   document.documentElement.classList.toggle('dark', window.matchMedia('(prefers-color-scheme: dark)').matches);

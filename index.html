@@ -1,1 +1,63 @@
-<!-- test modified files - modified again -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>番组日历 - 新番资讯 · 每日追番</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#e8485a">
+<meta name="description" content="新番资讯 · 每日追番">
+</head>
+<body>
+
+<div class="deco-particle" style="top:8%;left:5%;width:8px;height:8px;animation-delay:0s;background:#ff6b8a"></div>
+<div class="deco-particle" style="top:15%;right:12%;width:5px;height:5px;animation-delay:1.2s;background:#ffd700"></div>
+<div class="deco-particle" style="top:40%;left:3%;width:6px;height:6px;animation-delay:0.6s;background:#ff9eb5"></div>
+<div class="deco-particle" style="top:65%;right:8%;width:7px;height:7px;animation-delay:1.8s;background:#ffd700"></div>
+<div class="deco-particle" style="top:85%;left:10%;width:4px;height:4px;animation-delay:2.4s;background:#ff6b8a"></div>
+<div class="deco-particle" style="top:25%;right:4%;width:9px;height:9px;animation-delay:0.3s;background:var(--accent)"></div>
+<div class="deco-particle" style="top:55%;left:8%;width:5px;height:5px;animation-delay:1.5s;background:var(--primary-light)"></div>
+<div class="deco-particle" style="top:75%;right:15%;width:6px;height:6px;animation-delay:2.1s;background:var(--accent-light)"></div>
+
+<header class="header">
+<div class="header-inner">
+<div class="logo">
+<span class="logo-icon">⭐</span>
+<span class="logo-text">番组日历</span>
+<span class="logo-sub">Anime Calendar</span>
+</div>
+<nav class="nav-row">
+<select id="yearSelect"></select>
+<span class="nav-sep">年</span>
+<select id="seasonSelect">
+<option value="winter">冬季</option>
+<option value="spring">春季</option>
+<option value="summer">夏季</option>
+<option value="fall">秋季</option>
+</select>
+<input type="search" class="search-input" id="searchInput" placeholder="搜索番剧...">
+</nav>
+</div>
+</header>
+
+<main class="main" id="list">
+<div class="stats-bar" id="statsBar"></div>
+<div class="loading" id="loading"><span class="spinner"></span>加载中...</div>
+<div class="empty" id="empty">暂无数据</div>
+</main>
+
+<button class="gotop" id="goTop">↑</button>
+
+<div class="kbd-hint" id="kbdHint">← → 切换季度  ·  Esc 关闭详情  · 点击关闭提示</div>
+
+<div class="overlay" id="overlay">
+<div class="overlay-inner">
+<button class="overlay-close" id="overlayClose">✕</button>
+<div id="overlayContent"></div>
+</div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
