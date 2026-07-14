@@ -434,8 +434,12 @@ html.dark .search-input {
   aspect-ratio: 3/4;
   overflow: hidden;
   background: var(--bg);
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
   border-radius: var(--radius-sm);
   position: relative;
+  transition: transform .4s ease;
 }
 
 .card-img::after {
@@ -447,15 +451,7 @@ html.dark .search-input {
   pointer-events: none;
 }
 
-.card-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform .4s ease;
-}
-
-.card:hover .card-img img { transform: scale(1.06); }
+.card:hover .card-img { transform: scale(1.04); }
 
 .fav-btn {
   position: absolute;
@@ -518,7 +514,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 .overlay-inner {
   background: var(--surface);
   border-radius: var(--radius);
-  max-width: 620px;
+  max-width: 720px;
   margin: 40px auto;
   padding: 28px;
   position: relative;
@@ -567,8 +563,10 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   aspect-ratio: 3/4;
   border-radius: var(--radius-sm);
   background: var(--bg);
+  cursor: zoom-in;
 }
 
+.detail-img a { display: block; cursor: zoom-in; }
 .detail-img img {
   width: 100%;
   border-radius: var(--radius-sm);
@@ -655,6 +653,45 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 
 .detail-text { color: var(--text); }
 .detail-spacer { height: 8px; }
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0,0,0,.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: zoom-out;
+}
+.lightbox.open { display: flex; animation: overlayIn .2s ease; }
+.lightbox img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 8px;
+  box-shadow: 0 8px 40px rgba(0,0,0,.5);
+  object-fit: contain;
+}
+.lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0,0,0,.4);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: .2s;
+}
+.lightbox-close:hover { background: rgba(0,0,0,.7); transform: rotate(90deg); }
 
 @media (max-width: 700px) {
   .card-list { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding: 14px; }

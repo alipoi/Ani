@@ -5,10 +5,13 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "fetch-data": "node fetch_from_anilist.js",
-    "fetch-images": "node fetch_images.js"
+    "fetch-data": "node fetch_acgsecrets.js",
+    "fetch-images": "node fetch_acgsecrets.js --images-only"
   },
   "engines": {
     "node": ">=12.0.0"
+  },
+  "dependencies": {
+    "opencc-js": "^1.4.1"
   }
 }

@@ -19,7 +19,7 @@ var overlayClose = document.getElementById('overlayClose');
 var statsBar = document.getElementById('statsBar');
 
 function imgName(t) {
-  return t.replace(/:/g, '\uFF1A').replace(/[/]/g, '%2F').replace(/[\?\*"<>\|]/g, '');
+  return t.replace(/:/g, '\uFF1A').replace(/[/]/g, '%2F').replace(/[\?\*"<>\|']/g, '');
 }
 function imgPath(a) {
   if (!a || !a.title) return '';
@@ -47,7 +47,7 @@ function goSeason(d) {
   if (d > 0) S.season = i < 3 ? SEASON_ORDER[i+1] : (S.year++, 'winter');
   else S.season = i > 0 ? SEASON_ORDER[i-1] : (S.year--, 'fall');
   if (S.year > new Date().getFullYear()) S.year = new Date().getFullYear();
-  if (S.year < 2015) S.year = 2015;
+  if (S.year < 2016) S.year = 2016;
   loadView();
 }
 
@@ -178,11 +178,9 @@ function scrollToToday() {
 function cardHTML(a) {
   var fav = isFav(a.id);
   var img = imgPath(a);
-  var fb = a.coverImage ? ' onerror="this.src=\'' + esc(a.coverImage) + '\'"' : '';
+  var bgStyle = img && a.coverImage ? ' style="background-image:url(' + img + ')"' : '';
   return '<div class="card" data-id="' + esc(a.id) + '">' +
-    '<div class="card-img">' +
-    (img && a.coverImage ? '<img src="' + img + '" alt="' + esc(a.title) + '" loading="lazy" class="lazy-fade"' + fb + '>' : '') +
-    '</div>' +
+    '<div class="card-img"' + bgStyle + '></div>' +
     '<button class="fav-btn' + (fav ? ' on' : '') + '" data-id="' + esc(a.id) + '">' + (fav ? '★' : '☆') + '</button>' +
     '<div class="card-title">' + esc(a.title) + '</div>' +
     '</div>';
@@ -201,7 +199,7 @@ function openDetail(a) {
   var img = imgPath(a);
   var fb = a.coverImage ? ' onerror="this.src=\'' + esc(a.coverImage) + '\'"' : '';
   var h = '<div class="detail-top">' +
-    '<div class="detail-img">' +
+    '<div class="detail-img" onclick="openLightbox(\'' + esc(img) + '\')">' +
     (img && a.coverImage ? '<img src="' + img + '" alt="' + esc(a.title) + '"' + fb + '>' : '') +
     '</div>' +
     '<div class="detail-info"><div class="detail-title">' + esc(a.title) + '</div>' +
@@ -254,8 +252,52 @@ function closeOverlay() {
   document.body.style.overflow = '';
 }
 
+var lightboxEl = document.getElementById('lightbox');
+var lightboxImg = document.getElementById('lightboxImg');
+function openLightbox(src) {
+  if (!src) return;
+  lightboxImg.src = src;
+  lightboxEl.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  lightboxEl.classList.remove('open');
+  document.body.style.overflow = '';
+}
+lightboxEl.onclick = function(e) { if (e.target === this) closeLightbox(); };
+document.getElementById('lightboxClose').onclick = closeLightbox;
+document.addEventListener('keydown', function(e) {
+  if (lightboxEl.classList.contains('open') && e.key === 'Escape') closeLightbox();
+});
+
+function openLightbox(src) {
+  var lb = document.getElementById('lightbox');
+  document.getElementById('lightboxImg').src = src;
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  var lb = document.getElementById('lightbox');
+  lb.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+overlayContent.addEventListener('click', function(e) {
+  var trigger = e.target.closest('.img-lightbox-trigger');
+  if (!trigger) return;
+  e.preventDefault();
+  var img = trigger.querySelector('img');
+  if (img) openLightbox(img.src);
+});
+
+document.getElementById('lightbox').onclick = function(e) {
+  if (e.target === this || e.target.classList.contains('lightbox-close')) closeLightbox();
+};
+
 document.addEventListener('keydown', function(e) {
   if (overlay.classList.contains('open')) { if (e.key === 'Escape') closeOverlay(); return; }
+  var lb = document.getElementById('lightbox');
+  if (lb.classList.contains('open')) { if (e.key === 'Escape') closeLightbox(); return; }
   if (e.key === 'Escape' && searchInput.value) { searchInput.value = ''; render(S.list); saveQ(); searchInput.blur(); }
   if (!searchInput.value) {
     if (e.key === 'ArrowLeft') { e.preventDefault(); goSeason(-1); }
@@ -281,7 +323,7 @@ seasonSelect.onchange = function() { S.season = this.value; loadView(); };
 
 function popYear() {
   var cur = new Date().getFullYear();
-  for (var y = cur; y >= 2015; y--) {
+  for (var y = cur; y >= 2016; y--) {
     var o = document.createElement('option');
     o.value = y; o.textContent = y;
     yearSelect.appendChild(o);
