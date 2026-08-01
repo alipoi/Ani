@@ -87,7 +87,6 @@ function showErr(m) {
   empty.style.display = 'block';
   empty.textContent = m;
 }
-
 function normAll(arr) {
   if (!arr) return [];
   arr.forEach(norm);
@@ -242,7 +241,7 @@ function loadBangumiResources(key, id) {
         box.innerHTML = '<div class="res-empty">暂无资源</div><a class="rss-link" href="/rss/bangumi/' + encodeURIComponent(key) + '/' + encodeURIComponent(id) + '" target="_blank">📡 RSS 订阅</a>';
         return;
       }
-      box.innerHTML = '<div class="res-list">' + d.list.map(resRowHTML).join('') + '</div>' +
+      box.innerHTML = '<div class="res-list">' + d.list.map(function(r) { return resRowHTML(r, true); }).join('') + '</div>' +
         '<div class="res-more"><a class="rss-link" href="/rss/bangumi/' + encodeURIComponent(key) + '/' + encodeURIComponent(id) + '" target="_blank">📡 RSS 订阅</a>' +
         '<span class="res-total">共 ' + d.total + ' 条</span></div>';
     } catch(e) {
@@ -253,10 +252,12 @@ function loadBangumiResources(key, id) {
   xhr.send();
 }
 
-function resRowHTML(r) {
-  return '<div class="res-row" data-hash="' + esc(r.info_hash) + '">' +
+function resRowHTML(r, mini) {
+  var cls = 'res-row' + (mini ? ' mini' : '');
+  var title = esc(r.title);
+  return '<div class="' + cls + '" data-hash="' + esc(r.info_hash) + '">' +
     '<span class="res-ep">' + esc(r.episode || '?') + '</span>' +
-    '<span class="res-title">' + esc(r.title) + '</span>' +
+    '<span class="res-title" title="' + title + '">' + title + '</span>' +
     '<span class="res-group">' + esc(r.subtitle_group || '') + '</span>' +
     '<span class="res-size">' + esc(r.size || '') + '</span>' +
     '<span class="res-time">' + esc(fmtTime(r.publish_time)) + '</span>' +
@@ -489,6 +490,13 @@ function loadGroupFilter() {
     try {
       var d = JSON.parse(this.responseText);
       RES_GROUPS = d.list || [];
+      var sel = document.getElementById('groupFilter');
+      if (sel && !sel.querySelector('option:not(:first-child)')) {
+        sel.innerHTML = '<option value="">全部字幕组</option>' + RES_GROUPS.map(function(g) {
+          return '<option value="' + esc(g.name) + '">' + esc(g.name) + ' (' + g.count + ')</option>';
+        }).join('');
+        sel.value = classicState.group || '';
+      }
     } catch(e) {}
   };
   xhr.send();
@@ -496,7 +504,13 @@ function loadGroupFilter() {
 
 // ---------- groups list ----------
 
-var groupsState = { page: 1, size: 100 };
+var groupsState = { page: 1, size: 90 };
+
+function groupInitial(name) {
+  if (!name) return '?';
+  var ch = name.trim().charAt(0);
+  return /[A-Za-z0-9]/.test(ch) ? ch.toUpperCase() : '#';
+}
 
 function renderGroups(page) {
   MODE = 'groups';
@@ -512,15 +526,26 @@ function renderGroups(page) {
     loading.style.display = 'none';
     if (!list.length) { empty.style.display = 'block'; empty.textContent = '暂无字幕组'; }
     else empty.style.display = 'none';
+    var pages = Math.ceil(list.length / groupsState.size);
+    var slice = list.slice((groupsState.page - 1) * groupsState.size, groupsState.page * groupsState.size);
     statsBar.innerHTML = '<span class="stats-icon">🏷</span> 字幕组列表' +
       (term ? ' · 搜索「' + esc(term) + '」' : '') +
       ' · 共 <span class="stats-num">' + list.length + '</span> 个';
-    listEl.innerHTML = '<div class="group-grid">' + list.map(function(g) {
+    var h = '<div class="group-grid">' + slice.map(function(g) {
       return '<div class="group-card" data-name="' + esc(g.name) + '">' +
-        '<div class="group-name">' + esc(g.name) + '</div>' +
-        '<div class="group-count">' + g.count + ' 条资源</div>' +
+        '<div class="group-avatar">' + esc(groupInitial(g.name)) + '</div>' +
+        '<div class="group-body"><div class="group-name" title="' + esc(g.name) + '">' + esc(g.name) + '</div>' +
+        '<div class="group-count">' + g.count + ' 条资源</div></div>' +
         '</div>';
     }).join('') + '</div>';
+    if (pages > 1) {
+      h += '<div class="pager">' +
+        '<button class="pager-btn" data-page="' + (groupsState.page - 1) + '"' + (groupsState.page <= 1 ? ' disabled' : '') + '>← 上一页</button>' +
+        '<span class="pager-info">' + groupsState.page + ' / ' + pages + '</span>' +
+        '<button class="pager-btn" data-page="' + (groupsState.page + 1) + '"' + (groupsState.page >= pages ? ' disabled' : '') + '>下一页 →</button>' +
+        '</div>';
+    }
+    listEl.innerHTML = h;
   };
   xhr.onerror = function() { showErr('加载失败'); };
   xhr.send();
@@ -633,6 +658,7 @@ listEl.addEventListener('click', function(e) {
   var page = parseInt(pb.dataset.page);
   if (MODE === 'classic') renderClassic(page);
   else if (MODE === 'group') renderGroupResources(page);
+  else if (MODE === 'groups') renderGroups(page);
 });
 
 listEl.addEventListener('change', function(e) {
