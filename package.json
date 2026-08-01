@@ -6,12 +6,16 @@
   "scripts": {
     "start": "node server.js",
     "fetch-data": "node fetch_acgsecrets.js",
-    "fetch-images": "node fetch_acgsecrets.js --images-only"
+    "fetch-images": "node fetch_acgsecrets.js --images-only",
+    "fetch-resources": "node fetch_resources.js",
+    "fetch-resources:full": "node fetch_resources.js --full"
   },
   "engines": {
     "node": ">=12.0.0"
   },
   "dependencies": {
+    "bencode": "^2.0.3",
+    "better-sqlite3": "^13.0.2",
     "opencc-js": "^1.4.1"
   }
 }

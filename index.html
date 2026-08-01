@@ -27,6 +27,11 @@
 <span class="logo-text">番组日历</span>
 <span class="logo-sub">Anime Calendar</span>
 </div>
+<nav class="nav-tabs">
+<a href="/" data-mode="calendar">日历</a>
+<a href="/classic" data-mode="classic">资源</a>
+<a href="/groups" data-mode="groups">字幕组</a>
+</nav>
 <nav class="nav-row">
 <select id="yearSelect"></select>
 <span class="nav-sep">年</span>
@@ -36,7 +41,7 @@
 <option value="summer">夏季</option>
 <option value="fall">秋季</option>
 </select>
-<input type="search" class="search-input" id="searchInput" placeholder="搜索番剧...">
+<input type="search" class="search-input" id="searchInput" placeholder="搜索番剧/资源...">
 </nav>
 </div>
 </header>
@@ -59,7 +64,7 @@
 </div>
 
 <div class="lightbox" id="lightbox">
-<button class="lightbox-close">✕</button>
+<button class="lightbox-close" id="lightboxClose">✕</button>
 <img id="lightboxImg" src="" alt="">
 </div>
 

@@ -6,6 +6,7 @@ var SEASON_LABEL = { winter:'冬季', spring:'春季', summer:'夏季', fall:'�
 var _cache = {};
 var _xhr = null;
 var _searchTimer = null;
+var MODE = 'calendar';
 
 var yearSelect = document.getElementById('yearSelect');
 var seasonSelect = document.getElementById('seasonSelect');
@@ -187,6 +188,10 @@ function cardHTML(a) {
 }
 
 listEl.addEventListener('click', function(e) {
+  var gcard = e.target.closest('.group-card');
+  if (gcard) { location.href = '/group/' + encodeURIComponent(gcard.dataset.name); return; }
+  var rrow = e.target.closest('.res-row');
+  if (rrow) { openResource(rrow.dataset.hash); return; }
   var card = e.target.closest('.card');
   if (!card) return;
   if (e.target.classList.contains('fav-btn')) { toggleFav(card.dataset.id, e.target); return; }
@@ -213,9 +218,57 @@ function openDetail(a) {
   }
   h += '</div></div>';
   if (a.content) h += '<div class="detail-body">' + fmt(a.content) + '</div>';
+  h += '<div class="detail-res" data-key="' + esc(S.key) + '" data-id="' + esc(a.id) + '"><div class="detail-res-h">资源更新</div><div class="res-loading">加载中...</div></div>';
   overlayContent.innerHTML = h;
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
+  loadBangumiResources(S.key, a.id);
+}
+
+function loadBangumiResources(key, id) {
+  var box = overlayContent.querySelector('.detail-res');
+  if (!box) return;
+  var boxInner = box.querySelector('.res-loading');
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/api/resources/bangumi?key=' + encodeURIComponent(key) + '&id=' + encodeURIComponent(id) + '&size=10', true);
+  xhr.onload = function() {
+    if (this.status < 200 || this.status >= 300) {
+      box.innerHTML = '<div class="res-empty">暂无资源</div>';
+      return;
+    }
+    try {
+      var d = JSON.parse(this.responseText);
+      if (!d.total) {
+        box.innerHTML = '<div class="res-empty">暂无资源</div><a class="rss-link" href="/rss/bangumi/' + encodeURIComponent(key) + '/' + encodeURIComponent(id) + '" target="_blank">📡 RSS 订阅</a>';
+        return;
+      }
+      box.innerHTML = '<div class="res-list">' + d.list.map(resRowHTML).join('') + '</div>' +
+        '<div class="res-more"><a class="rss-link" href="/rss/bangumi/' + encodeURIComponent(key) + '/' + encodeURIComponent(id) + '" target="_blank">📡 RSS 订阅</a>' +
+        '<span class="res-total">共 ' + d.total + ' 条</span></div>';
+    } catch(e) {
+      box.innerHTML = '<div class="res-empty">加载失败</div>';
+    }
+  };
+  xhr.onerror = function() { box.innerHTML = '<div class="res-empty">加载失败</div>'; };
+  xhr.send();
+}
+
+function resRowHTML(r) {
+  return '<div class="res-row" data-hash="' + esc(r.info_hash) + '">' +
+    '<span class="res-ep">' + esc(r.episode || '?') + '</span>' +
+    '<span class="res-title">' + esc(r.title) + '</span>' +
+    '<span class="res-group">' + esc(r.subtitle_group || '') + '</span>' +
+    '<span class="res-size">' + esc(r.size || '') + '</span>' +
+    '<span class="res-time">' + esc(fmtTime(r.publish_time)) + '</span>' +
+    '</div>';
+}
+
+function fmtTime(t) {
+  if (!t) return '';
+  var d = new Date(t.replace(' UTC', ''));
+  if (isNaN(d.getTime())) return t;
+  var p = function(n) { return (n < 10 ? '0' : '') + n; };
+  return d.getFullYear() + '/' + p(d.getMonth()+1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
 }
 
 function fmt(c) {
@@ -266,23 +319,12 @@ function closeLightbox() {
 }
 lightboxEl.onclick = function(e) { if (e.target === this) closeLightbox(); };
 document.getElementById('lightboxClose').onclick = closeLightbox;
-document.addEventListener('keydown', function(e) {
-  if (lightboxEl.classList.contains('open') && e.key === 'Escape') closeLightbox();
-});
-
-function openLightbox(src) {
-  var lb = document.getElementById('lightbox');
-  document.getElementById('lightboxImg').src = src;
-  lb.classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeLightbox() {
-  var lb = document.getElementById('lightbox');
-  lb.classList.remove('open');
-  document.body.style.overflow = '';
-}
 
 overlayContent.addEventListener('click', function(e) {
+  var row = e.target.closest('.res-row');
+  if (row) { openResource(row.dataset.hash); return; }
+  var link = e.target.closest('a[data-copy]');
+  if (link) { e.preventDefault(); copyMagnet(link.dataset.copy); return; }
   var trigger = e.target.closest('.img-lightbox-trigger');
   if (!trigger) return;
   e.preventDefault();
@@ -296,10 +338,9 @@ document.getElementById('lightbox').onclick = function(e) {
 
 document.addEventListener('keydown', function(e) {
   if (overlay.classList.contains('open')) { if (e.key === 'Escape') closeOverlay(); return; }
-  var lb = document.getElementById('lightbox');
-  if (lb.classList.contains('open')) { if (e.key === 'Escape') closeLightbox(); return; }
+  if (lightboxEl.classList.contains('open')) { if (e.key === 'Escape') closeLightbox(); return; }
   if (e.key === 'Escape' && searchInput.value) { searchInput.value = ''; render(S.list); saveQ(); searchInput.blur(); }
-  if (!searchInput.value) {
+  if (!searchInput.value && MODE === 'calendar') {
     if (e.key === 'ArrowLeft') { e.preventDefault(); goSeason(-1); }
     if (e.key === 'ArrowRight') { e.preventDefault(); goSeason(1); }
   }
@@ -364,8 +405,244 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', app
 
 searchInput.addEventListener('input', function() {
   clearTimeout(_searchTimer);
-  _searchTimer = setTimeout(function() { render(S.list); saveQ(); }, 150);
+  _searchTimer = setTimeout(function() {
+    if (MODE === 'calendar') { render(S.list); saveQ(); }
+    else if (MODE === 'classic') { renderClassic(1); }
+    else if (MODE === 'groups') { renderGroups(1); }
+    else if (MODE === 'group') { renderGroupResources(1); }
+  }, 250);
 });
+
+// ---------- mode routing ----------
+
+var RES_GROUPS = []; // cached group list for filter
+
+function setMode(m) {
+  MODE = m;
+  var tabs = document.querySelectorAll('.nav-tabs a');
+  tabs.forEach(function(a) { a.classList.toggle('active', a.dataset.mode === m); });
+  var seasonControls = [yearSelect, seasonSelect, document.querySelector('.nav-sep')];
+  seasonControls.forEach(function(el) { el.style.display = (m === 'calendar') ? '' : 'none'; });
+  if (m === 'calendar') {
+    loadData(S.year, S.season);
+  } else if (m === 'classic') {
+    renderClassic(1);
+  } else if (m === 'groups') {
+    renderGroups(1);
+  }
+}
+
+// ---------- classic resource list ----------
+
+var classicState = { page: 1, group: '', size: 30 };
+
+function renderClassic(page) {
+  MODE = 'classic';
+  classicState.page = page || 1;
+  showLoad();
+  var term = searchInput.value.trim();
+  var url = '/api/resources/latest?page=' + classicState.page + '&size=' + classicState.size +
+    (classicState.group ? '&group=' + encodeURIComponent(classicState.group) : '') +
+    (term ? '&q=' + encodeURIComponent(term) : '');
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', url, true);
+  xhr.onload = function() {
+    if (this.status < 200 || this.status >= 300) { showErr('加载失败'); return; }
+    var d = JSON.parse(this.responseText);
+    loading.style.display = 'none';
+    if (!d.list.length) { empty.style.display = 'block'; empty.textContent = '暂无资源'; }
+    else empty.style.display = 'none';
+    var groupHtml = '<select id="groupFilter" class="res-filter">' +
+      '<option value="">全部字幕组</option>' +
+      RES_GROUPS.map(function(g) {
+        return '<option value="' + esc(g.name) + '"' + (classicState.group === g.name ? ' selected' : '') + '>' +
+          esc(g.name) + ' (' + g.count + ')</option>';
+      }).join('') + '</select>';
+    statsBar.innerHTML = '<span class="stats-icon">📦</span> 资源更新' +
+      (classicState.group ? ' · ' + esc(classicState.group) : '') +
+      (term ? ' · 搜索「' + esc(term) + '」' : '') +
+      ' · 共 <span class="stats-num">' + d.total + '</span> 条' +
+      '<span style="flex:1"></span>' + groupHtml;
+    var h = '<div class="res-table">' +
+      '<div class="res-table-head"><span>集数</span><span>标题</span><span>字幕组</span><span>大小</span><span>时间</span></div>' +
+      d.list.map(function(r) { return resRowHTML(r); }).join('') +
+      '</div>';
+    var pages = Math.ceil(d.total / d.size);
+    if (pages > 1) {
+      h += '<div class="pager">' +
+        '<button class="pager-btn" data-page="' + (d.page - 1) + '"' + (d.page <= 1 ? ' disabled' : '') + '>← 上一页</button>' +
+        '<span class="pager-info">' + d.page + ' / ' + pages + '</span>' +
+        '<button class="pager-btn" data-page="' + (d.page + 1) + '"' + (d.page >= pages ? ' disabled' : '') + '>下一页 →</button>' +
+        '</div>';
+    }
+    listEl.innerHTML = h;
+  };
+  xhr.onerror = function() { showErr('加载失败'); };
+  xhr.send();
+}
+
+function loadGroupFilter() {
+  if (RES_GROUPS.length) return;
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/api/groups', true);
+  xhr.onload = function() {
+    try {
+      var d = JSON.parse(this.responseText);
+      RES_GROUPS = d.list || [];
+    } catch(e) {}
+  };
+  xhr.send();
+}
+
+// ---------- groups list ----------
+
+var groupsState = { page: 1, size: 100 };
+
+function renderGroups(page) {
+  MODE = 'groups';
+  groupsState.page = page || 1;
+  showLoad();
+  var term = searchInput.value.trim();
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/api/groups?q=' + encodeURIComponent(term), true);
+  xhr.onload = function() {
+    if (this.status < 200 || this.status >= 300) { showErr('加载失败'); return; }
+    var d = JSON.parse(this.responseText);
+    var list = d.list || [];
+    loading.style.display = 'none';
+    if (!list.length) { empty.style.display = 'block'; empty.textContent = '暂无字幕组'; }
+    else empty.style.display = 'none';
+    statsBar.innerHTML = '<span class="stats-icon">🏷</span> 字幕组列表' +
+      (term ? ' · 搜索「' + esc(term) + '」' : '') +
+      ' · 共 <span class="stats-num">' + list.length + '</span> 个';
+    listEl.innerHTML = '<div class="group-grid">' + list.map(function(g) {
+      return '<div class="group-card" data-name="' + esc(g.name) + '">' +
+        '<div class="group-name">' + esc(g.name) + '</div>' +
+        '<div class="group-count">' + g.count + ' 条资源</div>' +
+        '</div>';
+    }).join('') + '</div>';
+  };
+  xhr.onerror = function() { showErr('加载失败'); };
+  xhr.send();
+}
+
+// ---------- single group page ----------
+
+function renderGroupResources(page) {
+  MODE = 'group';
+  var gname = decodeURIComponent(window.location.pathname.split('/').pop());
+  classicState.page = page || 1;
+  showLoad();
+  var term = searchInput.value.trim();
+  var url = '/api/group/' + encodeURIComponent(gname) + '?page=' + classicState.page + '&size=30' +
+    (term ? '&q=' + encodeURIComponent(term) : '');
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', url, true);
+  xhr.onload = function() {
+    if (this.status < 200 || this.status >= 300) { showErr('加载失败'); return; }
+    var d = JSON.parse(this.responseText);
+    loading.style.display = 'none';
+    if (!d.list.length) { empty.style.display = 'block'; empty.textContent = '暂无资源'; }
+    else empty.style.display = 'none';
+    statsBar.innerHTML = '<span class="stats-icon">🏷</span> ' + esc(gname) +
+      (term ? ' · 搜索「' + esc(term) + '」' : '') +
+      ' · 共 <span class="stats-num">' + d.total + '</span> 条';
+    var h = '<div class="res-table">' +
+      '<div class="res-table-head"><span>集数</span><span>标题</span><span>字幕组</span><span>大小</span><span>时间</span></div>' +
+      d.list.map(function(r) { return resRowHTML(r); }).join('') +
+      '</div>';
+    var pages = Math.ceil(d.total / d.size);
+    if (pages > 1) {
+      h += '<div class="pager">' +
+        '<button class="pager-btn" data-page="' + (d.page - 1) + '"' + (d.page <= 1 ? ' disabled' : '') + '>← 上一页</button>' +
+        '<span class="pager-info">' + d.page + ' / ' + pages + '</span>' +
+        '<button class="pager-btn" data-page="' + (d.page + 1) + '"' + (d.page >= pages ? ' disabled' : '') + '>下一页 →</button>' +
+        '</div>';
+    }
+    listEl.innerHTML = h;
+  };
+  xhr.onerror = function() { showErr('加载失败'); };
+  xhr.send();
+}
+
+// ---------- resource detail ----------
+
+function openResource(hash) {
+  if (!hash) return;
+  overlayContent.innerHTML = '<div class="res-loading">加载中...</div>';
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/api/resources/hash/' + hash, true);
+  xhr.onload = function() {
+    if (this.status < 200 || this.status >= 300) {
+      overlayContent.innerHTML = '<div class="res-empty">资源不存在或已删除</div>';
+      return;
+    }
+    var r = JSON.parse(this.responseText);
+    var h = '<div class="detail-top res-detail-top">' +
+      '<div class="detail-info" style="flex:1">' +
+      '<div class="detail-title" style="font-size:15px">' + esc(r.title) + '</div>';
+    h += '<div class="res-meta">';
+    if (r.subtitle_group) h += '<span class="detail-badge badge-web" style="margin-top:6px">' + esc(r.subtitle_group) + '</span>';
+    if (r.size) h += '<span class="detail-badge badge-air" style="margin-top:6px">' + esc(r.size) + '</span>';
+    if (r.publish_time) h += '<span class="detail-badge badge-night" style="margin-top:6px">' + esc(fmtTime(r.publish_time)) + '</span>';
+    h += '</div></div></div>';
+    h += '<div class="res-actions">';
+    if (r.magnet) h += '<button class="btn-primary" data-copy="' + esc(r.magnet) + '">🧲 复制磁力</button>' +
+      '<a class="btn-secondary" href="' + esc(r.magnet) + '">打开磁力</a>';
+    if (r.torrent_url) h += '<a class="btn-secondary" href="' + esc(r.torrent_url) + '" target="_blank">⬇ 下载种子</a>';
+    h += '</div>';
+    if (r.images && r.images.length) {
+      h += '<div class="res-images">' + r.images.map(function(src) {
+        return '<img src="' + esc(src) + '" loading="lazy" onclick="openLightbox(\'' + esc(src) + '\')">';
+      }).join('') + '</div>';
+    }
+    if (r.description) {
+      h += '<div class="detail-body res-desc">' + esc(r.description).split('\n').map(function(line) {
+        return line ? '<div>' + esc(line) + '</div>' : '<div class="detail-spacer"></div>';
+      }).join('') + '</div>';
+    }
+    overlayContent.innerHTML = h;
+  };
+  xhr.onerror = function() { overlayContent.innerHTML = '<div class="res-empty">加载失败</div>'; };
+  xhr.send();
+}
+
+function copyMagnet(magnet) {
+  if (!magnet) return;
+  var ta = document.createElement('textarea');
+  ta.value = magnet;
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  var btn = overlayContent.querySelector('[data-copy]');
+  if (btn) {
+    var old = btn.textContent;
+    btn.textContent = '✓ 已复制';
+    setTimeout(function() { btn.textContent = old; }, 1500);
+  }
+}
+
+// ---------- pager delegation ----------
+
+listEl.addEventListener('click', function(e) {
+  var pb = e.target.closest('.pager-btn');
+  if (!pb || pb.disabled) return;
+  var page = parseInt(pb.dataset.page);
+  if (MODE === 'classic') renderClassic(page);
+  else if (MODE === 'group') renderGroupResources(page);
+});
+
+listEl.addEventListener('change', function(e) {
+  if (e.target.id === 'groupFilter') {
+    classicState.group = e.target.value;
+    renderClassic(1);
+  }
+});
+
+// ---------- init ----------
 
 function init() {
   var now = new Date(), m = now.getMonth() + 1, y = now.getFullYear();
@@ -377,6 +654,21 @@ function init() {
   syncSel();
   var q = getSearch();
   if (q) searchInput.value = q;
-  loadData(S.year, S.season);
+
+  var path = window.location.pathname;
+  if (path === '/classic') {
+    loadGroupFilter();
+    setMode('classic');
+    renderClassic(1);
+  } else if (path === '/groups') {
+    setMode('groups');
+    renderGroups(1);
+  } else if (path.indexOf('/group/') === 0) {
+    setMode('group');
+    renderGroupResources(1);
+  } else {
+    setMode('calendar');
+    loadData(S.year, S.season);
+  }
 }
 init();

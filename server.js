@@ -2,6 +2,7 @@ var http = require('http');
 var fs = require('fs');
 var path = require('path');
 var vm = require('vm');
+var db = require('./db');
 
 var root = __dirname;
 var types = {
@@ -71,8 +72,8 @@ http.createServer(function(req, res) {
       serve(res, path.join(root, 'index.html'));
     });
   });
-}).listen(3000, function() {
-  console.log('http://127.0.0.1:3000');
+}).listen(8080, function() {
+  console.log('http://127.0.0.1:8080');
 });
 
 function serve(res, fp) {
@@ -112,6 +113,119 @@ function getSeasonData(key, season) {
 
 function handleAPI(req, res) {
   var urlPath = decodeURIComponent(req.url.split('?')[0]);
+  var query = req.url.split('?')[1] || '';
+  if (/^\/(api|rss)\//.test(urlPath)) db.init();
+  function q(name) {
+    var m = query.match(new RegExp('(?:^|[?&])' + name + '=([^&]*)'));
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+
+  // GET /api/resources/latest?page=&size=&group=&season=&q=
+  if (urlPath === '/api/resources/latest' && req.method === 'GET') {
+    var data = db.latest({
+      page: parseInt(q('page')) || 1,
+      size: parseInt(q('size')) || 30,
+      group: q('group'),
+      season: q('season'),
+      q: q('q')
+    });
+    writeJSON(res, 200, data);
+    return true;
+  }
+
+  // GET /api/resources/hash/:hash
+  var hashMatch = urlPath.match(/^\/api\/resources\/hash\/([0-9a-fA-F]{40})$/);
+  if (hashMatch) {
+    var item = db.byHash(hashMatch[1]);
+    if (!item) { writeJSON(res, 404, { error: 'not found' }); return true; }
+    if (item.images) {
+      try { item.images = JSON.parse(item.images); } catch(e) { item.images = []; }
+    }
+    writeJSON(res, 200, item);
+    return true;
+  }
+
+  // GET /api/resources/bangumi?key=202607&id=acgs-anime-2229&page=&size=
+  if (urlPath === '/api/resources/bangumi' && req.method === 'GET') {
+    var key = q('key'), id = q('id');
+    if (!key || !id) { writeJSON(res, 400, { error: 'missing key or id' }); return true; }
+    var all = db.byBangumi(id, key);
+    var page = parseInt(q('page')) || 1;
+    var size = Math.min(100, parseInt(q('size')) || 30);
+    var slice = all.slice((page - 1) * size, page * size);
+    writeJSON(res, 200, { list: slice, total: all.length, page: page, size: size });
+    return true;
+  }
+
+  // GET /api/groups?q=&page=&size=
+  if (urlPath === '/api/groups' && req.method === 'GET') {
+    writeJSON(res, 200, { list: db.groups(q('q')) });
+    return true;
+  }
+
+  // GET /api/group/:name?page=&size=
+  var groupMatch = urlPath.match(/^\/api\/group\/([^\/]+)$/);
+  if (groupMatch) {
+    var gname = groupMatch[1];
+    var gpage = parseInt(q('page')) || 1;
+    var gsize = Math.min(100, parseInt(q('size')) || 30);
+    var gdata = db.latest({ group: gname, page: gpage, size: gsize });
+    writeJSON(res, 200, gdata);
+    return true;
+  }
+
+  // GET /api/search?q=
+  if (urlPath === '/api/search' && req.method === 'GET') {
+    var kw = q('q');
+    if (!kw) { writeJSON(res, 400, { error: 'missing q' }); return true; }
+    var resources = db.search(kw, 50);
+    var bangumi = [];
+    var now = new Date();
+    for (var y = now.getFullYear(); y >= 2016; y--) {
+      for (var si = 0; si < SEASON_KEYS.length; si++) {
+        var seasonData = getSeasonData(y + SEASON_KEYS[si], SEASON_NAMES[si]);
+        if (!seasonData) continue;
+        seasonData.forEach(function(a) {
+          if ((a.title && a.title.indexOf(kw) !== -1) || (a.titleJp && a.titleJp.indexOf(kw) !== -1)) {
+            bangumi.push({ id: a.id, title: a.title, titleJp: a.titleJp, season_key: y + SEASON_KEYS[si], weekday: a.weekday, airTime: a.airTime });
+          }
+        });
+        if (bangumi.length > 20) break;
+      }
+      if (bangumi.length > 20) break;
+    }
+    writeJSON(res, 200, { resources: resources, bangumi: bangumi.slice(0, 20) });
+    return true;
+  }
+
+  // GET /rss/bangumi/:key/:id
+  var rssMatch = urlPath.match(/^\/rss\/bangumi\/(\d{6})\/([^\/]+)$/);
+  if (rssMatch) {
+    var list = db.byBangumi(rssMatch[2], rssMatch[1]);
+    var seasonData = getSeasonData(rssMatch[1], 'summer') || getSeasonData(rssMatch[1], 'spring') ||
+      getSeasonData(rssMatch[1], 'fall') || getSeasonData(rssMatch[1], 'winter');
+    var title = 'Ani - 订阅';
+    if (seasonData) {
+      seasonData.forEach(function(a) { if (a.id === rssMatch[2]) title = a.title; });
+    }
+    var base = 'http://' + req.headers.host;
+    var xml = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+      '<rss version="2.0"><channel>' +
+      '<title>' + esc(title) + '</title>' +
+      '<link>' + base + '/bangumi.html?key=' + rssMatch[1] + '&amp;id=' + encodeURIComponent(rssMatch[2]) + '</link>' +
+      '<description>Ani - ' + esc(title) + ' 更新订阅</description>';
+    list.forEach(function(r) {
+      var link = r.magnet ? r.magnet : (r.torrent_url || '');
+      xml += '<item><title>' + esc(r.title) + '</title><link>' + esc(link) + '</link>' +
+        '<guid isPermaLink="false">' + esc(r.info_hash) + '</guid>' +
+        '<description>' + esc(r.subtitle_group + ' ' + (r.size || '') + ' ' + r.source) + '</description>' +
+        '<pubDate>' + (r.publish_time || '') + '</pubDate></item>';
+    });
+    xml += '</channel></rss>';
+    res.writeHead(200, { 'Content-Type': 'application/rss+xml;charset=utf-8' });
+    res.end(xml);
+    return true;
+  }
 
   // GET /api/data/:key/:season
   var getMatch = urlPath.match(/^\/api\/data\/(\d{6})\/(winter|spring|summer|fall)$/);
@@ -158,3 +272,10 @@ function handleAPI(req, res) {
 
   return false;
 }
+
+function esc(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+var SEASON_KEYS = ['01', '04', '07', '10'];
+var SEASON_NAMES = ['winter', 'spring', 'summer', 'fall'];
