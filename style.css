@@ -866,6 +866,28 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 
 .pager-info { font-size: 13px; color: var(--text2); font-weight: 600; }
 
+.pager-jump { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text2); font-weight: 600; }
+
+.pager-input {
+  width: 60px;
+  padding: 5px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  text-align: center;
+  outline: none;
+}
+
+.pager-input:focus { border-color: var(--primary); }
+
+.pager-input::-webkit-outer-spin-button,
+.pager-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+.pager-input[type=number] { -moz-appearance: textfield; }
+
 /* ---------- groups ---------- */
 
 .group-grid {

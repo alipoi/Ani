@@ -469,12 +469,10 @@ function renderClassic(page) {
       d.list.map(function(r) { return resRowHTML(r); }).join('') +
       '</div>';
     var pages = Math.ceil(d.total / d.size);
+    if (classicState.page > pages && pages > 0) { renderClassic(pages); return; }
+    syncPageURL(classicState.page);
     if (pages > 1) {
-      h += '<div class="pager">' +
-        '<button class="pager-btn" data-page="' + (d.page - 1) + '"' + (d.page <= 1 ? ' disabled' : '') + '>← 上一页</button>' +
-        '<span class="pager-info">' + d.page + ' / ' + pages + '</span>' +
-        '<button class="pager-btn" data-page="' + (d.page + 1) + '"' + (d.page >= pages ? ' disabled' : '') + '>下一页 →</button>' +
-        '</div>';
+      h += pagerHTML(classicState.page, pages);
     }
     listEl.innerHTML = h;
   };
@@ -527,6 +525,8 @@ function renderGroups(page) {
     if (!list.length) { empty.style.display = 'block'; empty.textContent = '暂无字幕组'; }
     else empty.style.display = 'none';
     var pages = Math.ceil(list.length / groupsState.size);
+    if (groupsState.page > pages && pages > 0) { renderGroups(pages); return; }
+    syncPageURL(groupsState.page);
     var slice = list.slice((groupsState.page - 1) * groupsState.size, groupsState.page * groupsState.size);
     statsBar.innerHTML = '<span class="stats-icon">🏷</span> 字幕组列表' +
       (term ? ' · 搜索「' + esc(term) + '」' : '') +
@@ -539,11 +539,7 @@ function renderGroups(page) {
         '</div>';
     }).join('') + '</div>';
     if (pages > 1) {
-      h += '<div class="pager">' +
-        '<button class="pager-btn" data-page="' + (groupsState.page - 1) + '"' + (groupsState.page <= 1 ? ' disabled' : '') + '>← 上一页</button>' +
-        '<span class="pager-info">' + groupsState.page + ' / ' + pages + '</span>' +
-        '<button class="pager-btn" data-page="' + (groupsState.page + 1) + '"' + (groupsState.page >= pages ? ' disabled' : '') + '>下一页 →</button>' +
-        '</div>';
+      h += pagerHTML(groupsState.page, pages);
     }
     listEl.innerHTML = h;
   };
@@ -577,12 +573,10 @@ function renderGroupResources(page) {
       d.list.map(function(r) { return resRowHTML(r); }).join('') +
       '</div>';
     var pages = Math.ceil(d.total / d.size);
+    if (classicState.page > pages && pages > 0) { renderGroupResources(pages); return; }
+    syncPageURL(classicState.page);
     if (pages > 1) {
-      h += '<div class="pager">' +
-        '<button class="pager-btn" data-page="' + (d.page - 1) + '"' + (d.page <= 1 ? ' disabled' : '') + '>← 上一页</button>' +
-        '<span class="pager-info">' + d.page + ' / ' + pages + '</span>' +
-        '<button class="pager-btn" data-page="' + (d.page + 1) + '"' + (d.page >= pages ? ' disabled' : '') + '>下一页 →</button>' +
-        '</div>';
+      h += pagerHTML(classicState.page, pages);
     }
     listEl.innerHTML = h;
   };
@@ -652,13 +646,54 @@ function copyMagnet(magnet) {
 
 // ---------- pager delegation ----------
 
+function pagerHTML(page, pages) {
+  return '<div class="pager">' +
+    '<button class="pager-btn" data-page="' + (page - 1) + '"' + (page <= 1 ? ' disabled' : '') + '>← 上一页</button>' +
+    '<span class="pager-info">' + page + ' / ' + pages + '</span>' +
+    '<span class="pager-jump">跳至 <input type="number" class="pager-input" min="1" max="' + pages + '" value="' + page + '"> 页</span>' +
+    '<button class="pager-btn pager-go">跳转</button>' +
+    '<button class="pager-btn" data-page="' + (page + 1) + '"' + (page >= pages ? ' disabled' : '') + '>下一页 →</button>' +
+    '</div>';
+}
+
+function syncPageURL(page) {
+  var base = MODE === 'group' ? window.location.pathname : '/' + MODE;
+  history.replaceState(null, '', page > 1 ? base + '?page=' + page : base);
+}
+
+function pageFromURL() {
+  var m = (window.location.search.match(/[?&]page=(\d+)/) || [])[1];
+  var p = parseInt(m);
+  return p >= 1 ? p : 1;
+}
+
+function doPageJump() {
+  var input = listEl.querySelector('.pager-input');
+  if (!input) return;
+  var p = parseInt(input.value);
+  var max = parseInt(input.max) || 1;
+  if (!p || p < 1) p = 1;
+  if (p > max) p = max;
+  if (MODE === 'classic') renderClassic(p);
+  else if (MODE === 'group') renderGroupResources(p);
+  else if (MODE === 'groups') renderGroups(p);
+}
+
 listEl.addEventListener('click', function(e) {
+  if (e.target.closest('.pager-go')) { doPageJump(); return; }
   var pb = e.target.closest('.pager-btn');
   if (!pb || pb.disabled) return;
   var page = parseInt(pb.dataset.page);
   if (MODE === 'classic') renderClassic(page);
   else if (MODE === 'group') renderGroupResources(page);
   else if (MODE === 'groups') renderGroups(page);
+});
+
+listEl.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && e.target.classList.contains('pager-input')) {
+    e.preventDefault();
+    doPageJump();
+  }
 });
 
 listEl.addEventListener('change', function(e) {
@@ -685,13 +720,13 @@ function init() {
   if (path === '/classic') {
     loadGroupFilter();
     setMode('classic');
-    renderClassic(1);
+    renderClassic(pageFromURL());
   } else if (path === '/groups') {
     setMode('groups');
-    renderGroups(1);
+    renderGroups(pageFromURL());
   } else if (path.indexOf('/group/') === 0) {
     setMode('group');
-    renderGroupResources(1);
+    renderGroupResources(pageFromURL());
   } else {
     setMode('calendar');
     loadData(S.year, S.season);
