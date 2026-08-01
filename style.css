@@ -704,6 +704,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   .header-inner { padding: 10px 0; gap: 8px; }
   .gotop { right: 16px; bottom: 70px; width: 36px; height: 36px; font-size: 17px; }
   .kbd-hint { font-size: 10px; padding: 4px 12px; bottom: 16px; }
+}
 
 @media (max-width: 460px) {
   .card-list { grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; }
