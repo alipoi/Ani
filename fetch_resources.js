@@ -332,6 +332,37 @@ function tokenize(s) {
     .filter(function(t) { return t.length >= 2; });
 }
 
+var ROMAN = { I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6, VII: 7, VIII: 8, IX: 9, X: 10,
+  Ⅰ: 1, Ⅱ: 2, Ⅲ: 3, Ⅳ: 4, Ⅴ: 5, Ⅵ: 6, Ⅶ: 7, Ⅷ: 8, Ⅸ: 9, Ⅹ: 10 };
+var CN_NUM = { 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10 };
+
+function seasonOfTitle(s) {
+  s = s || '';
+  var m = s.match(/第\s*([1-9]\d*)\s*[季期]/) ||
+    s.match(/第\s*([一二三四五六七八九十]+)\s*[季期]/) ||
+    s.match(/[Ss]\s*([1-9]\d*)\b/) ||
+    s.match(/([1-9]\d*)\s*(?:st|nd|rd|th)\s*[Ss]eason/) ||
+    s.match(/([1-9]\d*)\s*[季期]\b/);
+  if (m) return /^[一二三四五六七八九十]+$/.test(m[1]) ? (CN_NUM[m[1]] || null) : +m[1];
+  var r = s.match(/([ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]+)\s*$/);
+  if (r) return ROMAN[r[1]] || null;
+  var h = s.match(/([IVXLCDM]{2,6})(?:\s*$|[\s\-–—/\[(])/);
+  if (h) { for (var k in ROMAN) if (k === h[1]) return ROMAN[k]; }
+  var q = s.match(/([\u4e00-\u9fff])\s*([2-9])(?=\s*(?:$|\/|[-–—\[(]))/);
+  if (q) return +q[2];
+  var t = s.match(/[^\d](\d{1,2})\s*$/);
+  if (t) return +t[1];
+  return null;
+}
+
+var SEASON_TOKEN_RE = /^(第\s*\d+\s*[季期クール]|第\s*[一二三四五六七八九十]+\s*[季期クール]|\d{1,2}\s*(?:st|nd|rd|th)\s*[Ss]eason|[Ss]\d{1,2}|[Ss]eason\s*\d{1,2}|[ⅰ-ⅹⅠ-Ⅹ]|[ivxlcdm]{2,6}|…+)$/;
+
+function seasonStatus(seasonR, seasonB) {
+  if (seasonR === null) return 0;
+  if (seasonB === null) return seasonR > 1 ? -1 : 0;
+  return seasonR === seasonB ? 1 : -1;
+}
+
 function matchAll(bangumi) {
   var t0 = Date.now();
   var items = db.allUnmatched();
@@ -343,13 +374,24 @@ function matchAll(bangumi) {
   // and cn tokens (fallback: all tokens must appear in the title)
   var plans = bangumi.map(function(b) {
     var keys = [];
-    if (b.titleJp && b.titleJp.length >= 2) keys.push({ type: 'jp', key: norm(b.titleJp) });
+    var jp = norm(b.titleJp);
+    var jpKey = { type: 'jp', key: jp };
+    keys.push(jpKey);
+    var seasonB = seasonOfTitle(b.titleJp);
+    if (seasonB === null) seasonB = seasonOfTitle(b.title);
+    if (seasonB !== null) {
+      var stripped = norm(b.titleJp).replace(/(?:[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]|[ivxlcdm]{2,6}|\d{1,2})\s*$/, '').replace(/第\s*\d+\s*[季期]\s*$/, '');
+      if (stripped.length >= 2 && stripped !== jpKey.key) {
+        keys.push({ type: 'jps', key: stripped });
+      }
+    }
     if (b.title && b.title.length >= 3 && b.title !== b.titleJp) keys.push({ type: 'cn', key: norm(b.title) });
     var tokens = tokenize(norm(b.title));
     if (tokens.length >= 2) {
-      keys = keys.concat(tokens.map(function(t) { return { type: 'token', key: t }; }));
+      keys = keys.concat(tokens.filter(function(t) { return !SEASON_TOKEN_RE.test(t) && !/^[a-z]{1,2}$/.test(t); })
+        .map(function(t) { return { type: 'token', key: t }; }));
     }
-    return { b: b, keys: keys, tokens: tokens };
+    return { b: b, keys: keys, tokens: tokens, seasonB: seasonB };
   });
   var planById = {};
   plans.forEach(function(p) { planById[p.b.id] = p; });
@@ -361,13 +403,15 @@ function matchAll(bangumi) {
       if (!k.key) return;
       var c = k.key.charAt(0);
       if (!keyIndex[c]) keyIndex[c] = [];
-      keyIndex[c].push({ plan: p, key: k });
+      keyIndex[c].push({ plan: p, key: k, keyC: k.key.replace(/\s+/g, '') });
     });
   });
 
   // scan: for each resource, check only keys whose first char appears in the title
   items.forEach(function(item) {
     var title = norm(item.title);
+    var titleC = title.replace(/\s+/g, '');
+    var seasonR = seasonOfTitle(item.title);
     var seen = {};
     var chars = {};
     for (var i = 0; i < title.length; i++) chars[title.charAt(i)] = true;
@@ -376,21 +420,26 @@ function matchAll(bangumi) {
       if (!cands) continue;
       for (var j = 0; j < cands.length; j++) {
         var cand = cands[j];
-        if (title.indexOf(cand.key.key) === -1) continue;
         var sc = 0;
         if (cand.key.type === 'jp') {
           if (hasBoundary(title, cand.key.key)) sc = 4;
+        } else if (cand.key.type === 'jps') {
+          if (hasBoundary(title, cand.key.key)) sc = 3;
         } else if (cand.key.type === 'cn') {
-          sc = 3;
+          if (title.indexOf(cand.key.key) !== -1 || titleC.indexOf(cand.keyC) !== -1) sc = 3;
         } else {
-          sc = 2;
+          if (title.indexOf(cand.key.key) !== -1) sc = /[\u4e00-\u9fff]/.test(cand.key.key) ? 2 : 1;
         }
-        if (sc > 0 && (seen[cand.plan.b.id] === undefined || sc > seen[cand.plan.b.id])) {
+        if (sc === 0) continue;
+        var st = seasonStatus(seasonR, cand.plan.seasonB);
+        if (st === -1) continue;
+        if (st === 1) sc += 2;
+        if (seen[cand.plan.b.id] === undefined || sc > seen[cand.plan.b.id]) {
           seen[cand.plan.b.id] = sc;
         }
       }
     }
-    // token fallback (2) only counts if ALL cn tokens appear in the title
+    // token fallback only counts if ALL cn tokens appear in the title
     for (var id in seen) {
       if (seen[id] === 2) {
         var p = planById[id];
