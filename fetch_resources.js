@@ -348,9 +348,10 @@ function seasonOfTitle(s) {
   if (r) return ROMAN[r[1]] || null;
   var h = s.match(/([IVXLCDM]{2,6})(?:\s*$|[\s\-–—/\[(])/);
   if (h) { for (var k in ROMAN) if (k === h[1]) return ROMAN[k]; }
-  var q = s.match(/([\u4e00-\u9fff])\s*([2-9])(?=\s*(?:$|\/|[-–—\[(]))/);
+  var q = s.match(/([\u4e00-\u9fff！!])\s*([2-9])\s*[！!]{1,4}(?=\s*(?:$|\/|[-–—\[(]))/) ||
+    s.match(/([\u4e00-\u9fff！!])\s*([2-9])(?=\s*(?:$|\/|[-–—\[(]))/);
   if (q) return +q[2];
-  var t = s.match(/[^\d](\d{1,2})\s*$/);
+  var t = s.match(/[^\d](\d{1,2})\s*[！!]*\s*$/);
   if (t) return +t[1];
   return null;
 }
@@ -387,11 +388,17 @@ function matchAll(bangumi) {
     }
     if (b.title && b.title.length >= 3 && b.title !== b.titleJp) keys.push({ type: 'cn', key: norm(b.title) });
     var tokens = tokenize(norm(b.title));
-    if (tokens.length >= 2) {
-      keys = keys.concat(tokens.filter(function(t) { return !SEASON_TOKEN_RE.test(t) && !/^[a-z]{1,2}$/.test(t); })
-        .map(function(t) { return { type: 'token', key: t }; }));
-    }
-    return { b: b, keys: keys, tokens: tokens, seasonB: seasonB };
+    var expanded = tokens.slice();
+    tokens.forEach(function(t) {
+      if (t.length >= 8 && /^[\u4e00-\u9fff]+$/.test(t)) {
+        t.split(/[的了这与和及在]/).forEach(function(s) {
+          if (s.length >= 4 && expanded.indexOf(s) === -1) expanded.push(s);
+        });
+      }
+    });
+    keys = keys.concat(expanded.filter(function(t) { return !SEASON_TOKEN_RE.test(t) && !/^[a-z]{1,2}$/.test(t); })
+      .map(function(t) { return { type: 'token', key: t }; }));
+    return { b: b, keys: keys, tokens: expanded, seasonB: seasonB };
   });
   var planById = {};
   plans.forEach(function(p) { planById[p.b.id] = p; });
@@ -428,7 +435,9 @@ function matchAll(bangumi) {
         } else if (cand.key.type === 'cn') {
           if (title.indexOf(cand.key.key) !== -1 || titleC.indexOf(cand.keyC) !== -1) sc = 3;
         } else {
-          if (title.indexOf(cand.key.key) !== -1) sc = /[\u4e00-\u9fff]/.test(cand.key.key) ? 2 : 1;
+          var hit = title.indexOf(cand.key.key) !== -1;
+          if (hit && !/[\u4e00-\u9fff]/.test(cand.key.key)) hit = hasBoundary(title, cand.key.key);
+          if (hit) sc = /[\u4e00-\u9fff]/.test(cand.key.key) ? 2 : 1;
         }
         if (sc === 0) continue;
         var st = seasonStatus(seasonR, cand.plan.seasonB);
@@ -439,13 +448,17 @@ function matchAll(bangumi) {
         }
       }
     }
-    // token fallback only counts if ALL cn tokens appear in the title
+    // token fallback: all tokens must appear, OR a single strong (>=6 char) token hit counts
     for (var id in seen) {
       if (seen[id] === 2) {
         var p = planById[id];
         if (!p || p.tokens.length < 2) { delete seen[id]; continue; }
         var all = p.tokens.every(function(t) { return title.indexOf(t) !== -1; });
-        if (!all) delete seen[id];
+        if (all) continue;
+        var strong = p.tokens.some(function(t) {
+          return t.length >= 6 && /[\u4e00-\u9fff]/.test(t) && title.indexOf(t) !== -1;
+        });
+        if (!strong) delete seen[id];
       }
     }
     // verify an episode exists
