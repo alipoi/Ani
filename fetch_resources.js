@@ -253,6 +253,11 @@ async function crawlPages(startPage, maxPages, stopOnSeen) {
       }
       stateSet({ page: p });
 
+      if (pm && p > totalPages) {
+        console.log('  Page ' + p + ' beyond total ' + totalPages + ' - stopping');
+        stop = true;
+        return;
+      }
       if (stopOnSeen && rows.length > 0 && inserted === 0) {
         console.log('  All rows on page ' + p + ' already in DB - stopping incremental crawl');
         stop = true;
@@ -295,6 +300,24 @@ function loadAllBangumi() {
 
 // ---------- matching ----------
 
+var OpenCC = require('opencc-js');
+var _t2s = null;
+function t2s(s) {
+  if (!_t2s) {
+    try { _t2s = OpenCC.Converter({ from: 'tw', to: 'cn' }); }
+    catch (e) { _t2s = null; }
+  }
+  if (!_t2s) return s;
+  try { return _t2s(s); } catch (e) { return s; }
+}
+
+function norm(s) {
+  return t2s(s).replace(/[！]/g, '!').replace(/[？]/g, '?').replace(/[：]/g, ':')
+    .replace(/[（]/g, '(').replace(/[）]/g, ')').replace(/[～]/g, '~')
+    .replace(/[－]/g, '-').replace(/[\u3000]/g, ' ')
+    .toLowerCase();
+}
+
 function hasBoundary(title, key) {
   var i = title.indexOf(key);
   if (i === -1) return false;
@@ -304,89 +327,99 @@ function hasBoundary(title, key) {
 }
 
 function tokenize(s) {
-  return (s || '').split(/[～～!！?？·・／\s\-–—+()\[\]【】「」『』,，.。：:]+/)
+  return (s || '').split(/[～～!！?？・·／\s\-–—+()\[\]【】「」『』,，.。：:]+/)
     .map(function(t) { return t.trim(); })
     .filter(function(t) { return t.length >= 2; });
-}
-
-function allTokensIn(title, name) {
-  var toks = tokenize(name);
-  if (!toks.length) return false;
-  for (var i = 0; i < toks.length; i++) {
-    if (title.indexOf(toks[i]) === -1) return false;
-  }
-  return true;
-}
-
-function matchScore(title, b) {
-  var jp = b.titleJp;
-  var cn = b.title;
-  var score = 0;
-  if (jp && jp.length >= 2 && hasBoundary(title, jp)) score += 4;
-  if (cn && cn.length >= 3) {
-    if (title.indexOf(cn) !== -1) score += 2;
-    else if (allTokensIn(title, cn)) score += 2;
-  }
-  if (score === 0) return 0;
-  if (!extractEpisode(title)) return 0;
-  return score;
 }
 
 function matchAll(bangumi) {
   var t0 = Date.now();
   var items = db.allUnmatched();
   console.log('match: unmatched rows=' + items.length);
-  var matched = 0, checked = 0;
+  var matched = 0, skipped = 0;
   var updates = [];
 
-  // build per-bangumi search keys: titleJp (boundary), full title, and tokens (len>=3)
+  // build per-bangumi search keys: titleJp (boundary, strong), full cn title (weak),
+  // and cn tokens (fallback: all tokens must appear in the title)
   var plans = bangumi.map(function(b) {
     var keys = [];
-    if (b.titleJp && b.titleJp.length >= 2) keys.push({ type: 'jp', key: b.titleJp });
-    if (b.title && b.title.length >= 3 && b.title !== b.titleJp) keys.push({ type: 'cn', key: b.title });
-    tokenize(b.title).forEach(function(t) {
-      if (t.length >= 3 && keys.every(function(k) { return k.key !== t; })) {
-        keys.push({ type: 'token', key: t });
-      }
+    if (b.titleJp && b.titleJp.length >= 2) keys.push({ type: 'jp', key: norm(b.titleJp) });
+    if (b.title && b.title.length >= 3 && b.title !== b.titleJp) keys.push({ type: 'cn', key: norm(b.title) });
+    var tokens = tokenize(norm(b.title));
+    if (tokens.length >= 2) {
+      keys = keys.concat(tokens.map(function(t) { return { type: 'token', key: t }; }));
+    }
+    return { b: b, keys: keys, tokens: tokens };
+  });
+  var planById = {};
+  plans.forEach(function(p) { planById[p.b.id] = p; });
+
+  // inverted index by first character: a key can only match a title that contains its first char
+  var keyIndex = {};
+  plans.forEach(function(p) {
+    p.keys.forEach(function(k) {
+      if (!k.key) return;
+      var c = k.key.charAt(0);
+      if (!keyIndex[c]) keyIndex[c] = [];
+      keyIndex[c].push({ plan: p, key: k });
     });
-    return { b: b, keys: keys };
   });
 
-  // in-memory scan: for each resource, check every bangumi whose keys could hit
-  var checkCount = 0;
-  items.forEach(function(item, idx) {
-    var title = item.title;
-    var best = null, bestScore = 0;
-    for (var i = 0; i < plans.length; i++) {
-      var plan = plans[i];
-      var score = 0;
-      for (var j = 0; j < plan.keys.length; j++) {
-        var k = plan.keys[j];
-        var pos = title.indexOf(k.key);
-        if (pos === -1) continue;
-        checkCount++;
-        if (k.type === 'jp') {
-          if (hasBoundary(title, k.key)) score = 4;
-          else continue;
-        } else if (score < 4) {
-          score = 2;
+  // scan: for each resource, check only keys whose first char appears in the title
+  items.forEach(function(item) {
+    var title = norm(item.title);
+    var seen = {};
+    var chars = {};
+    for (var i = 0; i < title.length; i++) chars[title.charAt(i)] = true;
+    for (var c in chars) {
+      var cands = keyIndex[c];
+      if (!cands) continue;
+      for (var j = 0; j < cands.length; j++) {
+        var cand = cands[j];
+        if (title.indexOf(cand.key.key) === -1) continue;
+        var sc = 0;
+        if (cand.key.type === 'jp') {
+          if (hasBoundary(title, cand.key.key)) sc = 4;
+        } else if (cand.key.type === 'cn') {
+          sc = 3;
+        } else {
+          sc = 2;
         }
-        if (score >= 4) break;
-      }
-      if (score > 0) {
-        // verify an episode exists
-        var ep = extractEpisode(title);
-        if (!ep) { score = 0; continue; }
-        if (score > bestScore) { bestScore = score; best = plan.b; }
+        if (sc > 0 && (seen[cand.plan.b.id] === undefined || sc > seen[cand.plan.b.id])) {
+          seen[cand.plan.b.id] = sc;
+        }
       }
     }
-    if (best) {
-      matched++;
-      updates.push({ hash: item.info_hash, id: best.id, key: best.key });
+    // token fallback (2) only counts if ALL cn tokens appear in the title
+    for (var id in seen) {
+      if (seen[id] === 2) {
+        var p = planById[id];
+        if (!p || p.tokens.length < 2) { delete seen[id]; continue; }
+        var all = p.tokens.every(function(t) { return title.indexOf(t) !== -1; });
+        if (!all) delete seen[id];
+      }
+    }
+    // verify an episode exists
+    if (!extractEpisode(item.title)) return;
+    var best = null, bestScore = 0, tie = false;
+    for (var id in seen) {
+      var sc = seen[id];
+      if (sc > bestScore) { bestScore = sc; best = id; tie = false; }
+      else if (sc === bestScore) tie = true;
+    }
+    if (best && !tie) {
+      var b = null;
+      for (var k = 0; k < plans.length; k++) { if (plans[k].b.id === best) { b = plans[k].b; break; } }
+      if (b) {
+        matched++;
+        updates.push({ hash: item.info_hash, id: b.id, key: b.key });
+      }
+    } else if (best) {
+      skipped++;
     }
   });
 
-  console.log('match: checks=' + checkCount + ' linked=' + matched);
+  console.log('match: linked=' + matched + ' ambiguous=' + skipped);
   // batch update
   for (var i = 0; i < updates.length; i += 500) {
     db.updateBangumiMany(updates.slice(i, i + 500));
@@ -500,6 +533,7 @@ async function rssIncremental(bangumi) {
 
 async function fetchRss(b, src, rStats) {
   var kws = [b.titleJp, b.title].filter(function(k) { return k && k.length >= 2; });
+  var nkws = kws.map(norm);
   var seen = false;
   for (var i = 0; i < kws.length; i++) {
     var xml;
@@ -512,6 +546,8 @@ async function fetchRss(b, src, rStats) {
     items.forEach(function(it) {
       if (!it.hash) return;
       if (db.exists(it.hash)) return;
+      // RSS search is token-based; only accept items whose title actually contains the keyword
+      if (!nkws.some(function(k) { return norm(it.title).indexOf(k) !== -1; })) return;
       var ok = db.insert({
         info_hash: it.hash,
         title: it.title,
