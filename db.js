@@ -84,8 +84,13 @@ function latest(opts) {
 
 function byBangumi(bangumiId, seasonKey) {
   init();
-  return db.prepare('SELECT * FROM resources WHERE bangumi_id = @id AND season_key = @s ORDER BY publish_time DESC')
+  var rows = db.prepare('SELECT * FROM resources WHERE bangumi_id = @id AND season_key = @s ORDER BY publish_time DESC')
     .all({ id: bangumiId, s: seasonKey });
+  if (!rows.length) {
+    rows = db.prepare('SELECT * FROM resources WHERE bangumi_id = @id ORDER BY publish_time DESC')
+      .all({ id: bangumiId });
+  }
+  return rows;
 }
 
 function groups(q) {

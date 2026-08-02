@@ -181,12 +181,15 @@ function handleAPI(req, res) {
     var resources = db.search(kw, 50);
     var bangumi = [];
     var now = new Date();
+    var seenBangumi = {};
     for (var y = now.getFullYear(); y >= 2016; y--) {
       for (var si = 0; si < SEASON_KEYS.length; si++) {
         var seasonData = getSeasonData(y + SEASON_KEYS[si], SEASON_NAMES[si]);
         if (!seasonData) continue;
         seasonData.forEach(function(a) {
+          if (seenBangumi[a.id]) return;
           if ((a.title && a.title.indexOf(kw) !== -1) || (a.titleJp && a.titleJp.indexOf(kw) !== -1)) {
+            seenBangumi[a.id] = true;
             bangumi.push({ id: a.id, title: a.title, titleJp: a.titleJp, season_key: y + SEASON_KEYS[si], weekday: a.weekday, airTime: a.airTime });
           }
         });
