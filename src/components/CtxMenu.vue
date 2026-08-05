@@ -1,5 +1,5 @@
 <script setup>
-import { watch, onMounted, onUnmounted } from 'vue'
+import { watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { ctxOpen, ctxMenu } from '../globals'
 import { useCopy } from '../useCopy'
 
@@ -13,8 +13,9 @@ function onClick(e) {
 function onScroll() { close() }
 function onKey(e) { if (e.key === 'Escape' && ctxOpen.value) close() }
 
-watch(ctxOpen, (open) => {
+watch(ctxOpen, async (open) => {
   if (open) {
+    await nextTick()
     const el = document.getElementById('ctxMenu')
     if (!el) return
     const mw = el.offsetWidth, mh = el.offsetHeight

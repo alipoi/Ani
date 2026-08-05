@@ -38,6 +38,10 @@ function go(p) {
   router.push({ path: '/group/' + encodeURIComponent(gname.value), query })
 }
 
+function openDetail(r) {
+  window.open(window.location.origin + '/#res/' + r.info_hash, '_blank')
+}
+
 function load() {
   loading.value = true
   err.value = false
@@ -64,7 +68,7 @@ watch(() => route.fullPath, load, { immediate: true })
       <div v-else>
         <div class="res-table">
           <div class="res-table-head"><span>{{ t('headEp') }}</span><span>{{ t('headTitle') }}</span><span>{{ t('headSize') }}</span><span>{{ t('headTime') }}</span><span>{{ t('headMagnet') }}</span></div>
-          <ResourceRow v-for="r in list" :key="r.info_hash" :r="r" />
+          <ResourceRow v-for="r in list" :key="r.info_hash" :r="r" @open="openDetail" />
         </div>
         <Pager v-if="pages > 1" :page="page" :pages="pages" @go="go" />
       </div>
