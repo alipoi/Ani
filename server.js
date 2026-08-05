@@ -209,7 +209,11 @@ function handleAPI(req, res) {
     if (item.images) {
       try { item.images = JSON.parse(item.images); } catch(e) { item.images = []; }
     }
-    writeJSON(req, res, 200, item);
+    var related = cachedResource('related:' + hashMatch[1], function() {
+      if (item.bangumi_id && item.season_key) return db.byBangumi(item.bangumi_id, item.season_key).slice(0, 20);
+      return db.byTitleRelated(hashMatch[1], 20);
+    });
+    writeJSON(req, res, 200, Object.assign({}, item, { related: related }));
     return true;
   }
 

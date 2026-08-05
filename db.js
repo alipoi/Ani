@@ -119,6 +119,65 @@ function byBangumi(bangumiId, seasonKey) {
   return rows;
 }
 
+function normTitle(s) {
+  return String(s || '')
+    .replace(/[０-９Ａ-Ｚａ-ｚ]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); })
+    .replace(/Ⅰ/g, 'I').replace(/Ⅱ/g, 'II').replace(/Ⅲ/g, 'III').replace(/Ⅳ/g, 'IV')
+    .replace(/－|–|—/g, '-')
+    .replace(/・/g, ' ')
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+function titleCore(title) {
+  var parts = normTitle(title)
+    .replace(/\[[^\]]*\]/g, ' ')
+    .replace(/【[^】]*】/g, ' ')
+    .replace(/[|｜]/g, ' ')
+    .split('/');
+  var cores = [];
+  for (var i = 0; i < parts.length; i++) {
+    var p = parts[i]
+      .replace(/\s*[-–—]+\s*\d+(\s*话|\s*集)?\s*$/, '')
+      .replace(/\s*S\d{1,2}\s*E\d{1,2}\s*.*$/i, '')
+      .replace(/\s*S\d{1,2}\s*-\s*\d+.*$/i, '')
+      .replace(/\s*[Ss]\d{1,3}\s*$/, '')
+      .replace(/\s*第\s*\d+\s*[话集卷].*$/, '')
+      .replace(/\s*[（(]?\d{2,4}月?[)）]?\s*$/, '')
+      .trim();
+    if (p.length >= 4) cores.push(p);
+  }
+  cores.sort(function(a, b) { return b.length - a.length; });
+  return cores[0] || '';
+}
+
+function byTitleRelated(hash, limit) {
+  init();
+  limit = limit || 20;
+  var row = db.prepare('SELECT title FROM resources WHERE info_hash = @h').get({ h: hash });
+  if (!row || !row.title) return [];
+  var core = titleCore(row.title);
+  if (!core || core.length < 4) return [];
+  var cands = [core];
+  var re = /[\p{L}\p{N}]{4,}/gu;
+  var m;
+  while ((m = re.exec(core)) !== null) {
+    if (m[0].length >= 4 && /[一-龥]/.test(m[0])) cands.push(m[0]);
+  }
+  cands = cands.filter(function(v, i) { return cands.indexOf(v) === i; });
+  var clause = [];
+  var args = { h: hash, n: limit };
+  for (var i = 0; i < cands.length; i++) {
+    clause.push('title LIKE @l' + i + " ESCAPE '\\'");
+    args['l' + i] = '%' + cands[i].replace(/[\\%_]/g, function(c) { return '\\' + c; }) + '%';
+  }
+  var rows = db.prepare('SELECT * FROM resources WHERE info_hash != @h AND (' + clause.join(' OR ') + ') ORDER BY publish_time DESC LIMIT @n')
+    .all(args);
+  return rows.filter(function(r) {
+    return normTitle(r.title).indexOf(core) !== -1;
+  }).slice(0, limit);
+}
+
 function groups(q) {
   init();
   var rows;
@@ -257,6 +316,7 @@ module.exports = {
   search: search,
   byHash: byHash,
   updateBangumi: updateBangumi,
+  byTitleRelated: byTitleRelated,
   updateDetails: updateDetails,
   noDetails: noDetails,
   hasDetails: hasDetails,
