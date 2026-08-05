@@ -11,6 +11,8 @@ function init() {
   if (db) return db;
   db = new Database(DB_PATH);
   db.pragma('journal_mode = WAL');
+  db.pragma('synchronous = NORMAL');
+  db.pragma('busy_timeout = 5000');
   db.exec('CREATE TABLE IF NOT EXISTS resources (' +
     '  info_hash   TEXT PRIMARY KEY,' +
     '  title       TEXT NOT NULL,' +
@@ -66,6 +68,10 @@ function latest(opts) {
     where.push('subtitle_group = @group');
     params.group = opts.group;
   }
+  if (opts.groupPrefix) {
+    where.push('subtitle_group LIKE @groupPrefix');
+    params.groupPrefix = opts.groupPrefix + '%';
+  }
   if (opts.season) {
     where.push('season_key = @season');
     params.season = opts.season;
@@ -75,10 +81,30 @@ function latest(opts) {
     params.q = '%' + opts.q + '%';
   }
   var whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
-  var total = db.prepare('SELECT COUNT(*) AS c FROM resources ' + whereSql).get(params).c;
-  var rows = db.prepare('SELECT * FROM resources ' + whereSql +
-    ' ORDER BY publish_time DESC, added_at DESC LIMIT @limit OFFSET @offset')
-    .all(Object.assign({}, params, { limit: size, offset: (page - 1) * size }));
+  var rows;
+  if (opts.q) {
+    // 无索引 LIKE 需全表扫：先只读排序列生成候选集（避免载入 description/images 大字段），再按主键取全列
+    var total = db.prepare('SELECT COUNT(*) AS c FROM resources ' + whereSql).get(params).c;
+    var ids = db.prepare('SELECT info_hash FROM resources ' + whereSql +
+      ' ORDER BY publish_time DESC, added_at DESC LIMIT @limit OFFSET @offset')
+      .all(Object.assign({}, params, { limit: size, offset: (page - 1) * size }))
+      .map(function(r) { return r.info_hash; });
+    if (!ids.length) {
+      rows = [];
+    } else {
+      var ph = ids.map(function() { return '?'; }).join(',');
+      var stmt = db.prepare('SELECT * FROM resources WHERE info_hash IN (' + ph + ')');
+      rows = stmt.all.apply(stmt, ids);
+      var order = {};
+      ids.forEach(function(h, i) { order[h] = i; });
+      rows.sort(function(a, b) { return order[a.info_hash] - order[b.info_hash]; });
+    }
+  } else {
+    var total = db.prepare('SELECT COUNT(*) AS c FROM resources ' + whereSql).get(params).c;
+    rows = db.prepare('SELECT * FROM resources ' + whereSql +
+      ' ORDER BY publish_time DESC, added_at DESC LIMIT @limit OFFSET @offset')
+      .all(Object.assign({}, params, { limit: size, offset: (page - 1) * size }));
+  }
   return { list: rows, total: total, page: page, size: size };
 }
 
@@ -182,6 +208,18 @@ function allRows() {
   return db.prepare('SELECT info_hash, title, episode FROM resources').all();
 }
 
+function byHashes(hashes) {
+  init();
+  var out = [];
+  for (var i = 0; i < hashes.length; i += 200) {
+    var slice = hashes.slice(i, i + 200);
+    var ph = slice.map(function() { return '?'; }).join(',');
+    var stmt = db.prepare('SELECT info_hash, title FROM resources WHERE info_hash IN (' + ph + ')');
+    out = out.concat(stmt.all.apply(stmt, slice));
+  }
+  return out;
+}
+
 function updateEpisode(hash, ep) {
   init();
   return db.prepare('UPDATE resources SET episode = @e WHERE info_hash = @h').run({ h: hash, e: ep });
@@ -201,8 +239,16 @@ function resetBangumi() {
   return db.prepare('UPDATE resources SET bangumi_id = NULL, season_key = NULL').run();
 }
 
+function close() {
+  if (db) {
+    try { db.close(); } catch (e) {}
+    db = null;
+  }
+}
+
 module.exports = {
   init: init,
+  close: close,
   insert: insert,
   count: count,
   latest: latest,
@@ -221,6 +267,7 @@ module.exports = {
   hashesLike: hashesLike,
   allUnmatched: allUnmatched,
   allRows: allRows,
+  byHashes: byHashes,
   updateEpisode: updateEpisode,
   updateBangumiMany: updateBangumiMany,
   resetBangumi: resetBangumi,

@@ -1,0 +1,54 @@
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import { VitePWA } from 'vite-plugin-pwa'
+
+export default defineConfig({
+  plugins: [
+    vue(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.png'],
+      manifest: {
+        name: 'Nekomi',
+        short_name: 'Nekomi',
+        description: '番组日历 - 新番资讯 · 每日追番',
+        theme_color: '#e8485a',
+        background_color: '#fef6f7',
+        display: 'standalone',
+        icons: [{ src: 'favicon.png', sizes: '192x192', type: 'image/png' }]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,jpg,woff2}'],
+        navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/rss\//, /^\/api\//],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/rss/'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'rss-cache',
+              networkTimeoutSeconds: 5
+            }
+          },
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/api/') || url.pathname.startsWith('/images/'),
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'api-cache' }
+          }
+        ]
+      }
+    })
+  ],
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': 'http://localhost:8080',
+      '/rss': 'http://localhost:8080',
+      '/images': 'http://localhost:8080'
+    }
+  },
+  build: {
+    outDir: 'dist',
+    target: 'es2018'
+  }
+})

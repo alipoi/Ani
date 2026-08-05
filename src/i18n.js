@@ -1,0 +1,132 @@
+import { createI18n } from 'vue-i18n'
+
+const messages = {
+  'zh-Hans': {
+    days: ['周一','周二','周三','周四','周五','周六','周日'],
+    daysSun: ['周日','周一','周二','周三','周四','周五','周六'],
+    season: { winter:'冬季', spring:'春季', summer:'夏季', fall:'秋季' },
+    navCalendar: '每周时间表', navClassic: '资源', navGroups: '字幕组',
+    yearSep: '年', searchPh: '搜索番剧/资源...',
+    loading: '加载中...', empty: '暂无数据', emptyBangumi: '未找到匹配的番剧',
+    noSeason: '暂无该季度数据', parseErr: '数据解析失败', loadErr: '加载失败',
+    noRes: '暂无资源', noGroups: '暂无字幕组', resGone: '资源不存在或已删除',
+    statsCalendar: '<span class="stats-icon">📅</span> {y}年{s}',
+    statsFound: ' · 搜索「{q}」找到 <span class="stats-num">{n}</span> 部',
+    statsTotal: ' · 共 <span class="stats-num">{n}</span> 部番剧',
+    statsRes: '<span class="stats-icon">📦</span> 资源更新',
+    statsSearch: ' · 搜索「{q}」',
+    statsCount: ' · 共 <span class="stats-num">{n}</span> 条',
+    statsGroups: '<span class="stats-icon">🏷</span> 字幕组列表',
+    statsGroupCount: ' · 共 <span class="stats-num">{n}</span> 个',
+    statsSubscribe: ' <a class="rss-link" href="{u}" target="_blank" style="margin-left:10px">📡 订阅</a>',
+    resCount: '共 <span class="stats-num">{n}</span> 条',
+    headEp: '集数', headTitle: '标题', headSize: '大小', headTime: '时间', headMagnet: '磁力',
+    copyMagnet: '复制磁力链接', openMagnet: '打开磁力', dlTorrent: '下载种子', copyTitle: '复制标题',
+    copied: '✓ 已复制',
+    titleTagView: '查看「{g}」字幕组资源',
+    rssSubscribe: 'RSS 订阅', subscribeGroup: '订阅该字幕组', rss: 'RSS',
+    groupRes: '{n} 条资源',
+    badgeWeb: '网络', badgeNight: '深夜', badgeAir: '放送', badgeShort: '泡面',
+    resUpdate: '资源更新',
+    today: '今天', yesterday: '昨天',
+    fieldAir: '播出：', fieldStudio: '制作：', fieldEps: '话数：', fieldOrig: '原作：',
+    fieldDir: '导演：', fieldScript: '编剧：', fieldChar: '人设：', fieldMusic: '音乐：',
+    fieldCast: '声优：', fieldGenre: '类型：', fieldTags: '标签：', fieldSite: '官网：',
+    pageFirst: '首页', pageLast: '尾页',
+    kbdHint: '← → 切换季度  ·  Esc 关闭详情  · 点击关闭提示',
+    themeLight: '浅色', themeDark: '深色', themeAuto: '跟随系统',
+    langZhHant: '繁體', langZhHans: '简体', langEn: 'English'
+  },
+  'zh-Hant': {
+    days: ['週一','週二','週三','週四','週五','週六','週日'],
+    daysSun: ['週日','週一','週二','週三','週四','週五','週六'],
+    season: { winter:'冬季', spring:'春季', summer:'夏季', fall:'秋季' },
+    navCalendar: '每週時間表', navClassic: '資源', navGroups: '字幕組',
+    yearSep: '年', searchPh: '搜索番劇/資源...',
+    loading: '載入中...', empty: '暫無資料', emptyBangumi: '未找到符合的番劇',
+    noSeason: '暫無該季度資料', parseErr: '資料解析失敗', loadErr: '載入失敗',
+    noRes: '暫無資源', noGroups: '暫無字幕組', resGone: '資源不存在或已刪除',
+    statsCalendar: '<span class="stats-icon">📅</span> {y}年{s}',
+    statsFound: ' · 搜索「{q}」找到 <span class="stats-num">{n}</span> 部',
+    statsTotal: ' · 共 <span class="stats-num">{n}</span> 部番劇',
+    statsRes: '<span class="stats-icon">📦</span> 資源更新',
+    statsSearch: ' · 搜索「{q}」',
+    statsCount: ' · 共 <span class="stats-num">{n}</span> 條',
+    statsGroups: '<span class="stats-icon">🏷</span> 字幕組列表',
+    statsGroupCount: ' · 共 <span class="stats-num">{n}</span> 個',
+    statsSubscribe: ' <a class="rss-link" href="{u}" target="_blank" style="margin-left:10px">📡 訂閱</a>',
+    resCount: '共 <span class="stats-num">{n}</span> 條',
+    headEp: '集數', headTitle: '標題', headSize: '大小', headTime: '時間', headMagnet: '磁力',
+    copyMagnet: '複製磁力連結', openMagnet: '開啟磁力', dlTorrent: '下載種子', copyTitle: '複製標題',
+    copied: '✓ 已複製',
+    titleTagView: '查看「{g}」字幕組資源',
+    rssSubscribe: 'RSS 訂閱', subscribeGroup: '訂閱該字幕組', rss: 'RSS',
+    groupRes: '{n} 條資源',
+    badgeWeb: '網路', badgeNight: '深夜', badgeAir: '放送', badgeShort: '泡麵',
+    resUpdate: '資源更新',
+    today: '今天', yesterday: '昨天',
+    fieldAir: '播出：', fieldStudio: '製作：', fieldEps: '話數：', fieldOrig: '原作：',
+    fieldDir: '導演：', fieldScript: '編劇：', fieldChar: '人設：', fieldMusic: '音樂：',
+    fieldCast: '聲優：', fieldGenre: '類型：', fieldTags: '標籤：', fieldSite: '官網：',
+    pageFirst: '首頁', pageLast: '末頁',
+    kbdHint: '← → 切換季度  ·  Esc 關閉詳情  · 點擊關閉提示',
+    themeLight: '淺色', themeDark: '深色', themeAuto: '跟隨系統',
+    langZhHant: '繁體', langZhHans: '簡體', langEn: 'English'
+  },
+  en: {
+    days: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    daysSun: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+    season: { winter:'Winter', spring:'Spring', summer:'Summer', fall:'Fall' },
+    navCalendar: 'Schedule', navClassic: 'Resources', navGroups: 'Groups',
+    yearSep: '', searchPh: 'Search anime / resources...',
+    loading: 'Loading...', empty: 'No data', emptyBangumi: 'No matching anime',
+    noSeason: 'No data for this season', parseErr: 'Failed to parse data', loadErr: 'Load failed',
+    noRes: 'No resources', noGroups: 'No groups', resGone: 'Resource not found or removed',
+    statsCalendar: '<span class="stats-icon">📅</span> {y} {s}',
+    statsFound: ' · <span class="stats-num">{n}</span> found for 「{q}」',
+    statsTotal: ' · <span class="stats-num">{n}</span> anime',
+    statsRes: '<span class="stats-icon">📦</span> Resource updates',
+    statsSearch: ' · search 「{q}」',
+    statsCount: ' · <span class="stats-num">{n}</span> items',
+    statsGroups: '<span class="stats-icon">🏷</span> Groups',
+    statsGroupCount: ' · <span class="stats-num">{n}</span> groups',
+    statsSubscribe: ' <a class="rss-link" href="{u}" target="_blank" style="margin-left:10px">📡 Subscribe</a>',
+    resCount: '<span class="stats-num">{n}</span> items',
+    headEp: 'Ep', headTitle: 'Title', headSize: 'Size', headTime: 'Time', headMagnet: 'Magnet',
+    copyMagnet: 'Copy magnet link', openMagnet: 'Open magnet', dlTorrent: 'Download torrent', copyTitle: 'Copy title',
+    copied: '✓ Copied',
+    titleTagView: 'View resources of「{g}」',
+    rssSubscribe: 'RSS Feed', subscribeGroup: 'Subscribe to this group', rss: 'RSS',
+    groupRes: '{n} items',
+    badgeWeb: 'Web', badgeNight: 'Night', badgeAir: 'TV', badgeShort: 'Short',
+    resUpdate: 'Resources',
+    today: 'Today', yesterday: 'Yesterday',
+    fieldAir: 'Airs: ', fieldStudio: 'Studio: ', fieldEps: 'Episodes: ', fieldOrig: 'Original: ',
+    fieldDir: 'Director: ', fieldScript: 'Script: ', fieldChar: 'Design: ', fieldMusic: 'Music: ',
+    fieldCast: 'Cast: ', fieldGenre: 'Genre: ', fieldTags: 'Tags: ', fieldSite: 'Official: ',
+    pageFirst: 'First', pageLast: 'Last',
+    kbdHint: '← → switch season  ·  Esc close detail  ·  click to dismiss',
+    themeLight: 'Light', themeDark: 'Dark', themeAuto: 'Auto',
+    langZhHant: '繁體', langZhHans: '简体', langEn: 'English'
+  }
+}
+
+const i18n = createI18n({
+  legacy: false,
+  locale: localStorage.getItem('nekomiLang') || 'zh-Hans',
+  fallbackLocale: 'zh-Hans',
+  messages,
+  missingWarn: false,
+  fallbackWarn: false
+})
+
+export function seasonLabel(sn) {
+  return i18n.global.tm('season')[sn] || sn
+}
+export function dayName(i) {
+  return i18n.global.tm('days')[i] || ''
+}
+export function dayNameSun(i) {
+  return i18n.global.tm('daysSun')[i] || ''
+}
+export default i18n

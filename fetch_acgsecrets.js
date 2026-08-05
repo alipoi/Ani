@@ -199,7 +199,8 @@ function writeDataFile(key, seasonKey, entries) {
 }
 
 function imgName(t) {
-  return t.replace(/:/g, '\uFF1A').replace(/[/]/g, '%2F').replace(/[\?\*"<>\|]/g, '');
+  // 与前端 script.js imgName 保持同一清理规则（含撇号），保证封面路径一致
+  return t.replace(/:/g, '\uFF1A').replace(/[/]/g, '%2F').replace(/[\?\*"<>\|']/g, '');
 }
 
 function downloadImage(url, dest) {
