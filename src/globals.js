@@ -1,8 +1,5 @@
 import { ref } from 'vue'
 
-export const drawerOpen = ref(false)
-export const drawerHash = ref('')
-
 export const overlayOpen = ref(false)
 export const overlayData = ref(null)
 

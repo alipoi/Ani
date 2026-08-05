@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { overlayOpen, overlayData, lightboxOpen, lightboxSrc, drawerOpen, drawerHash } from '../globals'
+import { overlayOpen, overlayData, lightboxOpen, lightboxSrc } from '../globals'
 import { API, apiGet } from '../api'
 import { esc, imgPath } from '../utils'
 import ResourceRow from './ResourceRow.vue'
@@ -65,8 +65,7 @@ function openImg() {
 }
 
 function openRes(r) {
-  drawerHash.value = r.info_hash
-  drawerOpen.value = true
+  window.open(window.location.origin + '/res/' + r.info_hash, '_blank')
 }
 
 function close() {

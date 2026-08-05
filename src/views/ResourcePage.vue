@@ -3,10 +3,14 @@ import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { API, apiGet } from '../api'
-import { fmtTime } from '../utils'
+import { fmtTime, esc } from '../utils'
 import { useCopy } from '../useCopy'
 import { lightboxOpen, lightboxSrc } from '../globals'
 import ResourceRow from '../components/ResourceRow.vue'
+
+function linkify(text) {
+  return esc(text).replace(/(https?:\/\/[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%.]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -69,7 +73,7 @@ function goBack() {
           <button class="res-title-copy" :title="t('copyTitle')" @click="copyText(res.title, 'title')">📋</button>
         </div>
         <div class="res-meta">
-          <span v-if="res.subtitle_group" class="detail-badge badge-web">{{ res.subtitle_group }}</span>
+          <span v-if="res.subtitle_group" class="detail-badge badge-web"><a :href="'/group/' + encodeURIComponent(res.subtitle_group)">{{ res.subtitle_group }}</a></span>
           <span v-if="res.size" class="detail-badge badge-air">{{ res.size }}</span>
           <span v-if="res.publish_time" class="detail-badge badge-night">{{ fmtTime(res.publish_time) }}</span>
         </div>
@@ -83,7 +87,7 @@ function goBack() {
         </div>
         <div v-if="res.description" class="detail-body res-desc">
           <template v-for="(line, i) in res.description.split('\n')" :key="i">
-            <div v-if="line">{{ line }}</div>
+            <div v-if="line" v-html="linkify(line)"></div>
             <div v-else class="detail-spacer"></div>
           </template>
         </div>
