@@ -454,7 +454,7 @@ function buildRssFeed(channelLink, channelTitle, list) {
     var magnet = magnetWithMyTrackers(r.magnet);
     if (!magnet && !r.torrent_url) return;
     var encUrl = magnet || r.torrent_url;
-    var detailUrl = channelLink.replace(/^(https?:\/\/[^\/]+)\/.*$/, '$1') + '/#res/' + r.info_hash;
+    var detailUrl = channelLink.replace(/^(https?:\/\/[^\/]+)\/.*$/, '$1') + '/res/' + r.info_hash;
     xml += '<item><title>' + esc(r.title) + '</title>' +
       '<link>' + esc(detailUrl) + '</link>' +
       '<guid isPermaLink="true">' + esc(detailUrl) + '</guid>' +

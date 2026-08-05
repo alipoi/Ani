@@ -1318,6 +1318,13 @@ html.dark .drawer { background: rgba(0,0,0,.65); }
 
 .res-meta { display: flex; flex-wrap: wrap; gap: 4px; }
 
+.res-page { max-width: 960px; margin: 0 auto; padding: 16px 16px 56px; }
+.res-page-head { display: flex; align-items: center; margin-bottom: 14px; }
+.res-page-back { padding: 6px 16px; }
+.res-page-related { margin-top: 28px; border-top: 1px solid var(--border); padding-top: 16px; }
+.res-page-h { font-size: 15px; font-weight: 600; margin-bottom: 10px; color: var(--text); }
+
+
 @media (max-width: 700px) {
   .res-table-head, .res-row {
     grid-template-columns: 40px 1fr 80px 40px;
