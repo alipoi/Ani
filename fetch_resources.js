@@ -971,6 +971,12 @@ async function main() {
       matchAll(bangumi, db.byHashes(fresh));
     }
     console.log('DB total: ' + db.count());
+    if (doDetails) {
+      var maxItems = arg('--details-max') ? parseInt(arg('--details-max')) : null;
+      console.log('Crawling episode details (max=' + (maxItems || 'all') + ')...');
+      var done = await crawlDetails(maxItems);
+      console.log('details: done=' + done + ' fetched=' + detailStats.fetched + ' updated=' + detailStats.updated + ' noIntro=' + detailStats.noIntro + ' failed=' + detailStats.failed);
+    }
     process.exit(0);
   }
 
