@@ -254,6 +254,44 @@ html.dark .dd-menu { box-shadow: 0 8px 24px rgba(0,0,0,.5); }
 .dd-item.active { color: var(--primary); }
 .dd-item.active svg { color: var(--primary); }
 
+.season-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.season-picker:hover { border-color: var(--primary); color: var(--primary); }
+.sp-arrow { font-size: 11px; opacity: .6; }
+.season-menu { min-width: 240px; padding: 12px; gap: 6px; }
+.sm-label { font-size: 11px; font-weight: 600; color: var(--text2); padding: 2px 4px; }
+.sm-years, .sm-seasons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.sm-years { grid-template-columns: repeat(5, 1fr); }
+.sm-years button, .sm-seasons button {
+  padding: 7px 0;
+  border: 1px solid var(--border);
+  background: none;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: all .12s;
+}
+.sm-years button:hover, .sm-seasons button:hover { border-color: var(--primary); color: var(--primary); }
+.sm-years button.on, .sm-seasons button.on {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
 .nav-sep {
   font-size: 14px;
   font-weight: 600;

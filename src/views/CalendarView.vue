@@ -1,7 +1,7 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { API, apiGet } from '../api'
 import { calYear, calSeason, seasonKey } from '../calendar'
 import { searchQuery } from '../search'
@@ -12,10 +12,33 @@ import { favs, isFav, toggleFav } from '../favs'
 
 const { t, tm } = useI18n()
 const route = useRoute()
+const router = useRouter()
 
 const data = ref(null)
 const loading = ref(false)
 const err = ref('')
+
+const seasonMenu = ref(false)
+const SEASONS = ['winter', 'spring', 'summer', 'fall']
+const years = computed(() => {
+  const out = []
+  for (let y = new Date().getFullYear(); y >= 2016; y--) out.push(y)
+  return out
+})
+
+function pickSeason(s) {
+  calSeason.value = s
+  router.push('/' + seasonKey(calYear.value, s) + '/')
+  seasonMenu.value = false
+}
+function pickYear(y) {
+  calYear.value = y
+  router.push('/' + seasonKey(y, calSeason.value) + '/')
+  seasonMenu.value = false
+}
+function onDocClick() {
+  seasonMenu.value = false
+}
 
 function load() {
   const key = seasonKey(calYear.value, calSeason.value)
@@ -53,11 +76,10 @@ const weekdays = computed(() => {
 })
 
 const statsHtml = computed(() => {
-  const base = t('statsCalendar', { y: calYear.value, s: t('season.' + calSeason.value) })
   const term = searchQuery.value.trim()
-  return base + (term
+  return term
     ? t('statsFound', { q: term, n: filtered.value.length })
-    : t('statsTotal', { n: filtered.value.length }))
+    : t('statsTotal', { n: filtered.value.length })
 })
 
 function openDetail(a) {
@@ -97,12 +119,35 @@ watch(() => route.path, (p) => {
   }
 })
 
-onMounted(load)
+onMounted(() => {
+  load()
+  document.addEventListener('click', onDocClick)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocClick)
+})
 </script>
 
 <template>
   <div>
-    <div class="stats-bar" v-html="statsHtml"></div>
+    <div class="stats-bar">
+      <div class="dd" @click.stop>
+        <button class="season-picker" @click="seasonMenu = !seasonMenu" :aria-expanded="seasonMenu">
+          📅 {{ calYear }}年{{ t('season.' + calSeason) }} <span class="sp-arrow">▾</span>
+        </button>
+        <div class="dd-menu season-menu" :hidden="!seasonMenu">
+          <div class="sm-label">年份</div>
+          <div class="sm-years">
+            <button v-for="y in years" :key="y" :class="{ on: y === calYear }" @click="pickYear(y)">{{ y }}</button>
+          </div>
+          <div class="sm-label">季度</div>
+          <div class="sm-seasons">
+            <button v-for="s in SEASONS" :key="s" :class="{ on: s === calSeason }" @click="pickSeason(s)">{{ t('season.' + s) }}</button>
+          </div>
+        </div>
+      </div>
+      <span v-html="statsHtml"></span>
+    </div>
     <main class="main" id="listWrap">
       <div v-if="loading" class="loading"><span class="spinner"></span>{{ t('loading') }}</div>
       <div v-else-if="err" class="empty show">{{ err }}</div>
