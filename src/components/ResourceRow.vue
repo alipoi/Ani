@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { groupTagHTML, fmtRel, fmtTime, esc } from '../utils'
+import { groupTagHTML, fmtRel, fmtTime } from '../utils'
 import { useCopy } from '../useCopy'
 import { ctxMenu, ctxOpen } from '../globals'
 
@@ -15,12 +15,6 @@ const { t } = useI18n()
 const { copied, copyText } = useCopy()
 
 const gt = computed(() => groupTagHTML(props.r))
-const titleHtml = computed(() => {
-  if (!gt.value) return esc(props.r.title)
-  return esc(gt.value.before) +
-    '<a class="res-title-tag" href="/group/' + encodeURIComponent(gt.value.tag) + '" title="' + esc(t('titleTagView', { g: gt.value.tag })) + '">[' + esc(gt.value.tag) + ']</a>' +
-    esc(gt.value.after)
-})
 const relTime = computed(() => fmtRel(props.r.publish_time, t))
 
 function showCtx(e) {
@@ -37,7 +31,8 @@ function showCtx(e) {
 <template>
   <div class="res-row" :class="{ mini }" :data-hash="r.info_hash" @click="emit('open', r)">
     <span class="res-ep">{{ r.episode || '?' }}</span>
-    <span class="res-title" :title="r.title" v-html="titleHtml"></span>
+    <span v-if="gt" class="res-title" :title="r.title">{{ gt.before }}<a class="res-title-tag" :href="'/group/' + encodeURIComponent(gt.tag)" :title="t('titleTagView', { g: gt.tag })" @click.stop>[{{ gt.tag }}]</a>{{ gt.after }}</span>
+    <span v-else class="res-title" :title="r.title">{{ r.title }}</span>
     <span class="res-size">{{ r.size || '' }}</span>
     <span class="res-time" :title="fmtTime(r.publish_time)">{{ relTime }}</span>
     <button
