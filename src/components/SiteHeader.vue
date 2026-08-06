@@ -3,9 +3,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { theme, setTheme } from '../theme'
-import i18n, { seasonLabel } from '../i18n'
+import i18n from '../i18n'
 import { searchQuery } from '../search'
-import { calYear, calSeason, seasonKey } from '../calendar'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -14,18 +13,12 @@ const router = useRouter()
 const themeMenu = ref(false)
 const langMenu = ref(false)
 
-const yearOptions = []
-const curY = new Date().getFullYear()
-for (let y = curY; y >= 2016; y--) yearOptions.push(y)
-
 const THEME_ICON = {
   light: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>',
   dark: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>',
   auto: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>'
 }
 const themeIcon = computed(() => THEME_ICON[theme.value === 'dark' ? 'dark' : (theme.value === 'light' ? 'light' : 'auto')])
-
-const isCalendar = computed(() => /^\/(\d{4})(\d{2})?\/?$/.test(route.path))
 
 const searchValue = ref(searchQuery.value)
 let searchTimer = null
@@ -38,25 +31,6 @@ function onSearchInput() {
     const base = route.path
     router.replace(q ? base + '?q=' + encodeURIComponent(q) : base)
   }, 250)
-}
-
-function goSeason(d) {
-  const order = ['winter', 'spring', 'summer', 'fall']
-  const i = order.indexOf(calSeason.value)
-  if (d > 0) {
-    if (i < 3) calSeason.value = order[i + 1]
-    else { calYear.value++; calSeason.value = 'winter' }
-  } else {
-    if (i > 0) calSeason.value = order[i - 1]
-    else { calYear.value--; calSeason.value = 'fall' }
-  }
-  if (calYear.value > new Date().getFullYear()) calYear.value = new Date().getFullYear()
-  if (calYear.value < 2016) calYear.value = 2016
-  router.push('/' + seasonKey(calYear.value, calSeason.value) + '/')
-}
-
-function pushCalendar() {
-  router.push('/' + seasonKey(calYear.value, calSeason.value) + '/')
 }
 
 const themeTitle = computed(() => {
@@ -96,15 +70,6 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside))
         <RouterLink to="/" data-mode="calendar">{{ t('navCalendar') }}</RouterLink>
         <RouterLink to="/classic" data-mode="classic">{{ t('navClassic') }}</RouterLink>
         <RouterLink to="/groups" data-mode="groups">{{ t('navGroups') }}</RouterLink>
-      </nav>
-      <nav class="nav-row" v-if="isCalendar">
-        <select v-model="calYear" @change="pushCalendar">
-          <option v-for="y in yearOptions" :key="y" :value="y">{{ y }}</option>
-        </select>
-        <span class="nav-sep">{{ t('yearSep') }}</span>
-        <select v-model="calSeason" @change="pushCalendar">
-          <option v-for="s in ['winter','spring','summer','fall']" :key="s" :value="s">{{ seasonLabel(s) }}</option>
-        </select>
       </nav>
       <nav class="nav-row">
         <input type="search" class="search-input" id="searchInput" :placeholder="t('searchPh')" v-model="searchValue" @input="onSearchInput">
