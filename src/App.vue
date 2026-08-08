@@ -8,7 +8,7 @@ import DetailOverlay from './components/DetailOverlay.vue'
 import Lightbox from './components/Lightbox.vue'
 import { searchQuery } from './search'
 import { goSeason, seasonKey, calYear, calSeason, currentSeasonNow } from './calendar'
-import { overlayOpen, lightboxOpen, kbdHintClosed, closeKbdHint } from './globals'
+import { overlayOpen, lightboxOpen } from './globals'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -68,10 +68,16 @@ watch(() => overlayOpen.value, (v) => {
   <div>
     <SiteHeader />
     <router-view />
+    <footer class="site-footer">
+      <span>
+        <a target="_blank" rel="noopener" href="https://beian.miit.gov.cn">粤ICP备2026014899号</a>
+        <span class="sep">|</span>
+        <a target="_blank" rel="noopener" href="https://beian.mps.gov.cn/#/query/webSearch?code=44011802001279">粤公网安备44011802001279号</a>
+      </span>
+    </footer>
     <CtxMenu />
     <DetailOverlay />
     <Lightbox />
     <button class="gotop" :class="{ show: showGoTop }" @click="goTop">↑</button>
-    <div v-if="!kbdHintClosed" class="kbd-hint" @click="closeKbdHint">{{ t('kbdHint') }}</div>
   </div>
 </template>

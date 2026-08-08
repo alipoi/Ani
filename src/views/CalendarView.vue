@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { API, apiGet } from '../api'
-import { calYear, calSeason, seasonKey } from '../calendar'
+import { calYear, calSeason, seasonKey, currentSeasonNow } from '../calendar'
 import { searchQuery } from '../search'
 import { overlayOpen, overlayData } from '../globals'
 import { imgPath } from '../utils'
@@ -101,6 +101,11 @@ const navDays = computed(() => {
 
 const activeDay = ref(todayWi)
 
+const isCurrentSeason = computed(() => {
+  const now = currentSeasonNow()
+  return seasonKey(calYear.value, calSeason.value) === seasonKey(now.y, now.s)
+})
+
 function scrollToDay(wi) {
   activeDay.value = wi
   const sections = document.querySelectorAll('.day-section')
@@ -182,6 +187,7 @@ function airLiveOf(a) {
 
 function scrollToToday() {
   if (searchQuery.value.trim()) return
+  if (!isCurrentSeason.value) { activeDay.value = 0; return }
   activeDay.value = todayWi
   const sections = document.querySelectorAll('.day-section')
   for (const s of sections) {
@@ -253,7 +259,7 @@ onBeforeUnmount(() => {
       <div v-else id="list">
         <div v-for="(day, i) in weekdays" :key="day.label" class="day-section" :data-wi="i">
           <template v-if="day.items.length">
-            <div class="day-h">{{ day.label }}<span class="day-count">{{ day.items.length }}</span><span class="day-date">{{ day.date }}<b v-if="day.isToday">（今天）</b></span></div>
+            <div class="day-h">{{ day.label }}<span class="day-count">{{ day.items.length }}</span><span v-if="isCurrentSeason" class="day-date">{{ day.date }}<b v-if="day.isToday">（今天）</b></span></div>
             <div class="card-list">
               <div v-for="a in day.items" :key="a.id" class="card" :data-id="a.id" @click="openDetail(a)">
                 <div class="card-img" :style="imgPath(a, seasonKey(calYear.value, calSeason.value)) ? { '--img': 'url(' + imgPath(a, seasonKey(calYear.value, calSeason.value)) + ')' } : {}">
@@ -265,7 +271,7 @@ onBeforeUnmount(() => {
                       </div>
                     </div>
                   </template>
-                  <span v-if="airTimeOf(a)" class="air-badge" :class="{ live: airLiveOf(a) }">
+                  <span v-if="isCurrentSeason && airTimeOf(a)" class="air-badge" :class="{ live: airLiveOf(a) }">
                     {{ airTimeOf(a) }}
                     <b v-if="airLiveOf(a)" class="air-live">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.247 7.761a6 6 0 0 1 0 8.478"></path><path d="M19.075 4.933a10 10 0 0 1 0 14.134"></path><path d="M4.925 19.067a10 10 0 0 1 0-14.134"></path><path d="M7.753 16.239a6 6 0 0 1 0-8.478"></path><circle cx="12" cy="12" r="2"></circle></svg>
