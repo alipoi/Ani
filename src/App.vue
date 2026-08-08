@@ -7,7 +7,7 @@ import CtxMenu from './components/CtxMenu.vue'
 import DetailOverlay from './components/DetailOverlay.vue'
 import Lightbox from './components/Lightbox.vue'
 import { searchQuery } from './search'
-import { goSeason, seasonKey, calYear, calSeason } from './calendar'
+import { goSeason, seasonKey, calYear, calSeason, currentSeasonNow } from './calendar'
 import { overlayOpen, lightboxOpen, kbdHintClosed, closeKbdHint } from './globals'
 
 const { t } = useI18n()
@@ -18,6 +18,15 @@ const showGoTop = ref(false)
 
 function onScroll() { showGoTop.value = window.scrollY > 400 }
 function goTop() { window.scrollTo({ top: 0, behavior: 'smooth' }) }
+
+function onVisibility() {
+  if (document.visibilityState !== 'visible' || route.path !== '/') return
+  const def = currentSeasonNow()
+  if (def.y !== calYear.value || def.s !== calSeason.value) {
+    calYear.value = def.y
+    calSeason.value = def.s
+  }
+}
 
 function onKeydown(e) {
   if (overlayOpen.value) { if (e.key === 'Escape') overlayOpen.value = false; return }
@@ -41,10 +50,12 @@ function onKeydown(e) {
 onMounted(() => {
   window.addEventListener('scroll', onScroll)
   document.addEventListener('keydown', onKeydown)
+  document.addEventListener('visibilitychange', onVisibility)
 })
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', onScroll)
   document.removeEventListener('keydown', onKeydown)
+  document.removeEventListener('visibilitychange', onVisibility)
 })
 
 watch(() => overlayOpen.value, (v) => {

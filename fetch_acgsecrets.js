@@ -45,6 +45,33 @@ var ROLE_MAP = {
 
 function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 
+// --refresh：给已有条目补上站点后来才公布的时间/星期信息（仅当本地缺失时升级，
+// 已有时间的条目绝不覆盖，保护手工修正）
+function upgradeSchedule(existing, fresh) {
+  var freshById = {};
+  fresh.forEach(function(e) { if (e.id) freshById[e.id] = e; });
+  var changed = 0;
+  existing.forEach(function(e) {
+    var f = freshById[e.id];
+    if (!f) return;
+    var cur = e.content || '';
+    var nw = f.content || '';
+    if (!/[時时]\d{1,2}分/.test(cur)) {
+      var m = nw.match(/播出[：:][^\n]*/);
+      if (m && /[時时]\d{1,2}分/.test(m[0])) {
+        var freshLine = m[0];
+        e.content = /播出[：:]/.test(cur)
+          ? cur.replace(/播出[：:][^\n]*/, freshLine)
+          : freshLine + '\n' + cur;
+        changed++;
+      }
+    }
+    if (!e.weekday && f.weekday) { e.weekday = f.weekday; changed++; }
+    if (!e.airTime && f.airTime) { e.airTime = f.airTime; changed++; }
+  });
+  return changed;
+}
+
 function fetchHTML(url) {
   return new Promise(function(resolve, reject) {
     var req = https.get(url, {
@@ -330,7 +357,7 @@ async function downloadAllImages(entries, key) {
 }
 
 async function main() {
-  var args = process.argv.slice(2);
+  var args = process.argv.slice(2).filter(function(a) { return a.charAt(0) !== '-'; });
   var startYear = 2016, endYear = new Date().getFullYear();
 
   if (args.length >= 2) {
@@ -343,6 +370,8 @@ async function main() {
 
   var dataOnly = process.argv.includes('--data-only');
   var imagesOnly = process.argv.includes('--images-only');
+  var addOnly = process.argv.includes('--add-only');
+  var refresh = process.argv.includes('--refresh');
   var force = process.argv.includes('--force');
   var noImages = process.argv.includes('--no-images');
 
@@ -366,6 +395,29 @@ async function main() {
         var dlCount = await downloadAllImages(seasonData, key);
         console.log('  Done: ' + dlCount + ' new images');
         await sleep(500);
+        continue;
+      }
+
+      if (addOnly && exists) {
+        var _DATA = {};
+        try { eval(fs.readFileSync(fp, 'utf-8')); } catch (e) { console.log('Skip ' + key + ' (parse error)'); continue; }
+        var existing = _DATA[key] ? _DATA[key][ms.season] : null;
+        if (!existing || existing.length === 0) { console.log('Skip ' + key + ' (empty existing)'); continue; }
+        console.log('\n=== ' + key + ' (' + y + ' ' + ms.label + ') - Add-only ===');
+        var fresh = await fetchSeasonData(key);
+        if (fresh.length === 0) { console.log('  No fresh data, keep existing'); continue; }
+        var existingIds = {};
+        existing.forEach(function(e) { if (e.id) existingIds[e.id] = true; });
+        var added = fresh.filter(function(e) { return e.id && !existingIds[e.id]; });
+        var upgraded = refresh ? upgradeSchedule(existing, fresh) : 0;
+        if (added.length === 0 && upgraded === 0) { console.log('  No new entries'); await sleep(SEASON_DELAY); continue; }
+        console.log('  New entries: ' + added.length + ', time upgraded: ' + upgraded + ' -> total ' + (existing.length + added.length));
+        writeDataFile(key, ms.season, existing.concat(added));
+        if (!dataOnly && !noImages) {
+          var dlCount = await downloadAllImages(added, key);
+          console.log('  Downloaded ' + dlCount + ' images');
+        }
+        await sleep(SEASON_DELAY);
         continue;
       }
 

@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { overlayOpen, overlayData, lightboxOpen, lightboxSrc } from '../globals'
 import { API, apiGet } from '../api'
 import { esc, imgPath } from '../utils'
+import { bgMeta, loadMetaFor } from '../bgmeta'
 import ResourceRow from './ResourceRow.vue'
 
 const { t } = useI18n()
@@ -37,16 +38,25 @@ function fmtFields(content) {
   return out
 }
 
-const badges = computed(() => {
-  const list = []
-  const at = overlayData.value && overlayData.value.a ? overlayData.value.a.airTime : ''
-  if (!at) return list
-  if (at.indexOf('网络') >= 0) list.push({ cls: 'badge-web', text: t('badgeWeb') })
-  else if (at.indexOf('深夜') >= 0) list.push({ cls: 'badge-night', text: t('badgeNight') })
-  else list.push({ cls: 'badge-air', text: t('badgeAir') })
-  if (at.indexOf('泡面') >= 0) list.push({ cls: 'badge-short', text: t('badgeShort') })
-  return list
+const meta = computed(() => {
+  const d = overlayData.value
+  return d && d.a ? bgMeta.get(d.seasonKey + ':' + d.a.id) || null : null
 })
+
+function fmtPlatform(p) {
+  if (!p) return ''
+  const map = { TV: 'calFmtTv', 剧场版: 'calFmtMovie', OVA: 'calFmtOva', ONA: 'calFmtOna', WEB: 'calFmtWeb' }
+  return t(map[p] || 'calFmtOther')
+}
+
+function fmtQuarter(q) {
+  return q ? q.y + t('yearSep') + t('season.' + q.sn) : ''
+}
+
+function fmtStatus(s) {
+  if (!s) return ''
+  return t('calStatus' + s.charAt(0).toUpperCase() + s.slice(1))
+}
 
 const imgSrc = computed(() => {
   const a = overlayData.value && overlayData.value.a
@@ -76,6 +86,7 @@ watch(overlayOpen, (open) => {
   if (!open) return
   const a = overlayData.value
   if (!a) return
+  loadMetaFor(a.a, a.seasonKey)
   resources.value = null
   err.value = false
   apiGet(API.bangumi(a.seasonKey, a.a.id))
@@ -92,11 +103,25 @@ watch(overlayOpen, (open) => {
         <div class="detail-top">
           <div class="detail-img" @click="openImg">
             <img v-if="showImg" :src="imgSrc" :alt="overlayData.a.title" @error="onImgError">
+            <a class="rss-icon rss-float" :href="'/rss/bangumi/' + encodeURIComponent(overlayData.seasonKey) + '/' + encodeURIComponent(overlayData.a.id)" target="_blank" :aria-label="t('rssSubscribe')" :title="t('rssSubscribe')" @click.stop>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg>
+            </a>
           </div>
           <div class="detail-info">
             <div class="detail-title">{{ overlayData.a.title }}</div>
             <div v-if="overlayData.a.titleJp" class="detail-title-jp">{{ overlayData.a.titleJp }}</div>
-            <span v-for="b in badges" :key="b.cls" class="detail-badge" :class="b.cls">{{ b.text }}</span>
+            <div v-if="meta" class="detail-meta">
+              <div class="detail-meta-line">
+                <span v-if="meta.score > 0" class="detail-score">{{ meta.score }}<i>{{ t('calScore') }}</i></span>
+                <span v-if="fmtPlatform(meta.platform)" class="detail-fmt">{{ fmtPlatform(meta.platform) }}</span>
+                <span v-if="meta.status" class="meta-status" :class="meta.status">{{ fmtStatus(meta.status) }}</span>
+                <span v-if="meta.quarter" class="detail-qt">{{ fmtQuarter(meta.quarter) }}</span>
+                <span v-if="meta.eps" class="detail-eps">{{ meta.eps }}{{ t('calEp') }}</span>
+              </div>
+              <div v-if="meta.tags.length" class="detail-tags">
+                <span v-for="(tg, ti) in meta.tags" :key="ti">{{ tg }}</span>
+              </div>
+            </div>
           </div>
         </div>
         <div v-if="overlayData.a.content" class="detail-body" v-html="fmtFields(overlayData.a.content)"></div>
@@ -110,7 +135,6 @@ watch(overlayOpen, (open) => {
               <ResourceRow v-for="r in resources.list" :key="r.info_hash" :r="r" mini @open="openRes" />
             </div>
             <div class="res-more">
-              <a class="rss-link" :href="'/rss/bangumi/' + encodeURIComponent(overlayData.seasonKey) + '/' + encodeURIComponent(overlayData.a.id)" target="_blank">📡 {{ t('rss') }}</a>
               <span v-if="resources.total" class="res-total" v-html="t('resCount', { n: resources.total })"></span>
             </div>          </template>
         </div>

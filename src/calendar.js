@@ -1,6 +1,12 @@
 import { ref } from 'vue'
 import { dayName } from './i18n'
 
+export function currentSeasonNow() {
+  const d = new Date()
+  const m = d.getMonth() + 1
+  return { y: d.getFullYear(), s: m <= 3 ? 'winter' : m <= 6 ? 'spring' : m <= 9 ? 'summer' : 'fall' }
+}
+
 const now = new Date()
 const m = now.getMonth() + 1
 const curYear = now.getFullYear()

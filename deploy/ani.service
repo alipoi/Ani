@@ -8,8 +8,12 @@ User=ani
 Group=ani
 WorkingDirectory=/opt/ani
 Environment=NODE_ENV=production
-# 如需走代理抓 nyaa/dmhy（国内 VPS）：取消下一行注释并填你的代理
+# 直连 80 端口（Cloudflare 回源），无需 root：放开绑定低端口的 capability
+# 如需走代理抓 nyaa/dmhy：取消下一行注释并填你的代理
 # Environment=HTTPS_PROXY=http://127.0.0.1:7890
+Environment=PORT=80
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 ExecStart=/usr/bin/env node server.js
 Restart=always
 RestartSec=5

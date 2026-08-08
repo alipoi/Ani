@@ -11,7 +11,7 @@ export default defineConfig({
       manifest: {
         name: 'Nekomi',
         short_name: 'Nekomi',
-        description: '番组日历 - 新番资讯 · 每日追番',
+        description: 'Nekomi 番剧日历与资源站：季度每周放送时间表、字幕组检索与 RSS 订阅。',
         theme_color: '#e8485a',
         background_color: '#fef6f7',
         display: 'standalone',

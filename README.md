@@ -1,8 +1,8 @@
-# Nekomi（番组日历）
+# Nekomi
 
-> 新番资讯 · 每日追番 · 资源检索 —— 自托管番剧日历与资源聚合站
+> Nekomi —— 自托管番剧日历与资源聚合站
 
-一个零依赖框架的 Node 单体应用：番剧季度时间表、资源数据库、字幕组聚合、全局搜索与 RSS 订阅。静态页面 + REST API 由同一进程提供，数据落在本地 SQLite 与季度 JSON 文件中。
+一个 Node 单体应用（Vue 3 + Vite 前端、Express 风格 API）：番剧季度时间表、资源数据库、字幕组聚合、全局搜索与 RSS 订阅。静态页面 + REST API 由同一进程提供，数据落在本地 SQLite 与季度 JSON 文件中。
 
 ![Node](https://img.shields.io/badge/Node-%3E%3D12-339933?logo=node.js)
 ![SQLite](https://img.shields.io/badge/SQLite-WAL-003B57?logo=sqlite)
@@ -12,12 +12,14 @@
 
 ## 功能特性
 
-- 🗓️ **每周时间表**：按周一到周日展示当季新番播出时间，支持年份 / 季度切换（2016 至今）
+- 🗓️ **每周时间表**：按周一到周日展示当季新番播出时间，支持年份 / 季度切换（2016 至今）；自动定位今天并高亮，左侧星期导航栏吸顶居中，点击平滑跳转
+- 📅 **日期与播出徽章**：每个星期标题带日期（如 `08/06（今天）`）；封面右上角显示放送时刻，播出时（开播 35 分钟内，每 30 秒刷新）变红并显示「播出中」
+- ⭐ **评分与标签**：封面左上角 Bangumi 评分、底部标签遮罩，详情弹窗同步展示
 - 📺 **资源检索**：Mikan 资源聚合入库，按最新发布分页浏览，支持番剧、季、字幕组筛选
 - 🔍 **全局搜索**：同时搜索资源标题（SQLite）与全季度番剧（内存缓存），重复关键词 10 分钟内秒回
 - 🏢 **字幕组聚合**：按字幕组浏览全部发布，支持关键词过滤
 - 🔗 **统一 Tracker**：所有输出的磁力链接自动注入 23 个自选 tracker（`004430.xyz` / `tracker.nekomi.cn` / itzmx / dler 等），替换掉来源 tracker
-- 📡 **RSS 订阅**：按番剧（`/rss/bangumi/:key/:id`）或字幕组（`/rss/group/:name`）输出 RSS 2.0，带 magnet enclosure
+- 📡 **RSS 订阅**：按番剧（`/rss/bangumi/:key/:id`）或字幕组（`/rss/group/:name`）输出 RSS 2.0，带 magnet enclosure；全站 RSS 入口为统一样式的圆形图标按钮
 - 🖼️ **详情页**：资源简介与截图（acgsecrets 抓取）
 - ⚡ **性能**：季度数据启动预热 + mtime 增量缓存；API/静态文件 gzip 压缩；Service Worker（PWA）离线缓存
 - 🌗 **暗色模式**：跟随系统 `prefers-color-scheme`
@@ -27,7 +29,8 @@
 ```bash
 git clone <repo-url>
 cd Ani
-npm install          # 安装 better-sqlite3 等依赖
+npm install          # 安装 better-sqlite3、vite 等依赖
+npm run build        # 构建前端（Vite → dist/）
 npm start            # 启动，默认 http://localhost:8080
 ```
 
@@ -42,6 +45,16 @@ npm run fetch-resources       # 资源增量爬取（Mikan，断点续爬）
 npm run fetch-resources:full  # 强制全量重爬（--full）
 ```
 
+常用抓取参数（`node fetch_acgsecrets.js [起始年] [结束年] [flags]`）：
+
+| 参数 | 说明 |
+|---|---|
+| `--add-only` | 增量：只追加站点新出现的番剧（含封面），不改动已有条目，适合 cron 每周跑 |
+| `--refresh` | 配合 `--add-only`：给已有条目补上站点后来公布的时间/星期（仅当本地缺失时） |
+| `--data-only` | 只更新数据，不下载封面 |
+| `--images-only` | 只补图片（已存在的数据文件） |
+| `--force` | 忽略已存在文件，强制重抓覆盖（会覆盖手工修改，慎用） |
+
 常用抓取参数（`node fetch_resources.js`）：
 
 | 参数 | 说明 |
@@ -51,6 +64,7 @@ npm run fetch-resources:full  # 强制全量重爬（--full）
 | `--rematch` | 清空番剧关联并重新匹配（44 万行约 1-2 分钟） |
 | `--rss` | 从 nyaa / dmhy 的 RSS 补充资源 |
 | `--details` | 补抓资源简介与截图 |
+| `--rss-one <id>` | 只匹配单部番剧的 RSS 资源（如补个别番剧的匹配） |
 
 ### 环境变量
 
@@ -205,7 +219,7 @@ Body: `{ "key": "202607", "season": "summer", "id": "acgs-anime-xxxx" }` → 从
 ```
 ┌──────────────┐   ┌───────────────────────────┐
 │  浏览器/订阅器 │──▶│  server.js（Node 单体）      │
-└──────────────┘   │  ├─ 静态文件（PWA + gzip）   │
+└──────────────┘   │  ├─ 静态文件（dist，PWA+gzip）│
                    │  ├─ REST API（/api/*）       │
                    │  └─ RSS（/rss/*）            │
                    └───────┬───────────────────┘
@@ -220,7 +234,7 @@ Body: `{ "key": "202607", "season": "summer", "id": "acgs-anime-xxxx" }` → 从
 
 - **存储**：`data/resources.db`（SQLite，WAL 模式，`better-sqlite3`）；`data/*.js` 为季度番剧数据文件（`_DATA["202607"]["summer"] = [...]` 形式）
 - **爬虫**：`fetch_resources.js`（Mikan 资源）+ `fetch_acgsecrets.js`（番剧信息/图片），独立进程，通过 `--fast` 支持 cron 增量
-- **前端**：原生 HTML/CSS/JS，无构建步骤；Service Worker 缓存静态资源
+- **前端**：Vue 3 + Vite（`src/`，`npm run build` 输出 `dist/`），多视图单页应用；Service Worker 缓存静态资源
 - **性能**：季度数据启动预热（44 文件 ≈ 150ms）并按 mtime 增量缓存；搜索结果 LRU 缓存（200 条 / 10 分钟）
 
 ## 目录结构
@@ -229,16 +243,22 @@ Body: `{ "key": "202607", "season": "summer", "id": "acgs-anime-xxxx" }` → 从
 .
 ├── server.js              # HTTP 服务：静态 + API + RSS
 ├── db.js                  # SQLite 数据层（better-sqlite3，WAL）
-├── fetch_resources.js     # Mikan 资源爬虫（--fast/--full/--rss/--details/--rematch）
-├── fetch_acgsecrets.js    # 番剧信息/图片爬虫（acgsecrets.hk，繁→简）
-├── index.html / style.css / script.js   # 前端（原生，无构建）
-├── sw.js                  # Service Worker（PWA）
-├── manifest.json          # PWA 清单
+├── fetch_resources.js     # Mikan 资源爬虫（--fast/--full/--rss/--details/--rematch/--rss-one）
+├── fetch_acgsecrets.js    # 番剧信息/图片爬虫（acgsecrets.hk，繁→简，--add-only 增量）
+├── vite.config.mjs        # Vite 构建 + PWA 插件
+├── index.html             # SPA 入口（SEO meta / canonical / og 标签）
+├── src/                   # 前端源码（Vue 3）
+│   ├── main.js / App.vue / router.js
+│   ├── views/             # CalendarView / ClassicView / GroupsView / GroupView / ResourcePage
+│   ├── components/        # SiteHeader / DetailOverlay / ResourceRow / Pager / CtxMenu / Lightbox
+│   ├── assets/style.css   # 全站样式（主题变量、暗色模式）
+│   ├── api.js / i18n.js / bgmeta.js / calendar.js / search.js / theme.js ...
+├── dist/                  # 构建产物（npm run build，已提交 git）
 ├── data/
 │   ├── resources.db       # 资源 SQLite 库（自动创建）
 │   ├── 202607.js ...      # 各季度番剧数据
 │   └── crawl_state.json   # 爬虫断点
-├── deploy/                # systemd + Caddy + cron 部署文件
+├── deploy/                # systemd + Caddy + cron（crawl.sh / schedule.sh / backup.sh / install.sh）
 └── DEPLOY.md              # 部署指南（VPS 推荐）
 ```
 
@@ -247,10 +267,41 @@ Body: `{ "key": "202607", "season": "summer", "id": "acgs-anime-xxxx" }` → 从
 自托管需要**持久化磁盘**（SQLite 文件 + 数据文件），推荐 2C2G 自建 VPS。Cloudflare Workers / Railway / Render 等无持久化平台不适用。
 
 ```bash
-sudo bash deploy/install.sh   # Node → 拉代码 → systemd → Caddy HTTPS → cron 爬虫 → 每日备份
+sudo bash deploy/install.sh   # Node → 拉代码 → systemd → cron 爬虫 → 每日备份
 ```
 
 详见 [`DEPLOY.md`](DEPLOY.md)。
+
+### 域名与 CDN（默认 Cloudflare）
+
+`install.sh` **不安装 Caddy**，默认走 Cloudflare CDN（Node 直接监听 :80）：
+
+1. DNS 添加 `nekomi.cn` 的 A 记录指向实例公网 IP，代理状态选「已代理」（橙色云朵）
+2. VCN 安全列表放行入站 **80**（443 由 CF 边缘终结 TLS，可不开）
+3. Cloudflare SSL/TLS 模式选 **Flexible**（CF→源站走 HTTP）
+4. 缓存规则：对 `/` 与 `/api/*` 设置「不缓存」或 Edge Cache TTL = 0，避免 HTML 被缓存成旧版本（静态资源 `dist/` 已带 hash，可放心缓存）
+
+### 自动化任务（install.sh 自动配置）
+
+| 任务 | 频率 | 脚本 |
+|---|---|---|
+| 资源增量爬取（Mikan，`--fast --details`） | 每 2 分钟 | `deploy/crawl.sh`（日志 `/var/log/ani-crawl.log`） |
+| 季度时间表爬取（acgsecrets，`--add-only --refresh`，当前+明年） | 每周日 03:15 | `deploy/schedule.sh`（日志 `/var/log/ani-schedule.log`） |
+| SQLite 在线备份（保留 7 天） | 每天 04:30 | `deploy/backup.sh` |
+
+时间表自动更新的范围：
+
+- **新季度自动创建**：10 月新番在 acgsecrets 上架后（通常开播前 3-6 周），周日任务自动抓取生成 `data/202610.js` 并下载全部封面
+- **季中新番自动追加**：季度中途新上架的番剧自动补入（`--add-only`）
+- **时间自动补全**：原「时间未定」的番剧在站点公布具体时间后自动写入（`--refresh`，只补缺失、不覆盖已有时间）
+- **不自动改**：已有确定时间的条目不会被覆盖（保护手工修正）；如需强制全量刷新：`node fetch_acgsecrets.js --force 2026 2026`
+
+### Oracle Cloud ARM（Ampere A1）说明
+
+- 系统选 **Ubuntu 22.04/24.04**（aarch64）：`install.sh` 可直接跑。Node 20 与 `better-sqlite3` 均有 linux-arm64 预编译包，脚本同时装了 `build-essential` 兜底编译。
+- 监听 80 端口通过 systemd `AmbientCapabilities=CAP_NET_BIND_SERVICE` 实现，无需 root 运行服务。
+- Oracle 实例均在境外，访问 Mikan / acgsecrets / 图片源无需代理（`HTTPS_PROXY` 留空即可）。
+- 迁移数据：把本机 `data/`（`resources.db` + 季度 JS + `images/`）拷到 `/opt/ani/` 下并保持 `ani` 用户属主，重启服务即生效。
 
 ## 许可证
 

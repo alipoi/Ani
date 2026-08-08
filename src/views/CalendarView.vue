@@ -5,10 +5,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { API, apiGet } from '../api'
 import { calYear, calSeason, seasonKey } from '../calendar'
 import { searchQuery } from '../search'
-import { dayNameSun } from '../i18n'
 import { overlayOpen, overlayData } from '../globals'
 import { imgPath } from '../utils'
-import { favs, isFav, toggleFav } from '../favs'
+import { loadSeasonMeta, bgMeta } from '../bgmeta'
 
 const { t, tm } = useI18n()
 const route = useRoute()
@@ -48,6 +47,7 @@ function load() {
     .then((d) => {
       data.value = Array.isArray(d) ? d : []
       data.value.forEach((a) => { a.seasonKey = key })
+      loadSeasonMeta(data.value, key)
     })
     .catch(() => { err.value = t('noSeason') })
     .finally(() => { loading.value = false })
@@ -65,7 +65,7 @@ const filtered = computed(() => {
 
 const weekdays = computed(() => {
   const out = []
-  for (let i = 0; i < 7; i++) out.push({ label: tm('days')[i], items: [] })
+  for (let i = 0; i < 7; i++) out.push({ label: tm('days')[i], items: [], date: dayInfo[i].date, isToday: dayInfo[i].isToday })
   const WK = ['周一','周二','周三','周四','周五','周六','周日']
   filtered.value.forEach((a) => {
     let wi = WK.indexOf(a.weekday || WK[0])
@@ -74,6 +74,58 @@ const weekdays = computed(() => {
   })
   return out
 })
+
+const today = new Date()
+const todayWi = (today.getDay() + 6) % 7
+
+const dayInfo = (() => {
+  const out = {}
+  for (let k = 0; k < 7; k++) {
+    const wi = (todayWi + k) % 7
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + k)
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    out[wi] = { date: mm + '/' + dd, isToday: k === 0 }
+  }
+  return out
+})()
+
+const navDays = computed(() => {
+  const out = []
+  for (let k = 0; k < 7; k++) {
+    const wi = (todayWi + k) % 7
+    out.push({ wi, label: tm('days')[wi], date: dayInfo[wi].date, isToday: dayInfo[wi].isToday })
+  }
+  return out
+})
+
+const activeDay = ref(todayWi)
+
+function scrollToDay(wi) {
+  activeDay.value = wi
+  const sections = document.querySelectorAll('.day-section')
+  for (const s of sections) {
+    if (s.dataset.wi === String(wi)) {
+      s.classList.add('current')
+      s.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+  }
+}
+
+let rafId = 0
+function onScroll() {
+  cancelAnimationFrame(rafId)
+  rafId = requestAnimationFrame(() => {
+    const mid = 140
+    const sections = document.querySelectorAll('.day-section')
+    let cur = activeDay.value
+    for (const s of sections) {
+      if (s.getBoundingClientRect().top <= mid) cur = parseInt(s.dataset.wi, 10)
+    }
+    activeDay.value = cur
+  })
+}
 
 const statsHtml = computed(() => {
   const term = searchQuery.value.trim()
@@ -87,21 +139,56 @@ function openDetail(a) {
   overlayOpen.value = true
 }
 
-function onFav(e, id) {
-  e.stopPropagation()
-  toggleFav(id)
+function metaOf(a) {
+  return bgMeta.get(seasonKey(calYear.value, calSeason.value) + ':' + a.id)
+}
+
+const now = ref(Date.now())
+let tickTimer = 0
+function startTick() {
+  tickTimer = setInterval(() => { now.value = Date.now() }, 30000)
+}
+
+const WEEK_MAP = { '一': 0, '二': 1, '三': 2, '四': 3, '五': 4, '六': 5, '日': 6, '天': 6 }
+
+function airOf(a) {
+  if (!a || !a.content) return null
+  let m = a.content.match(/播出[：:][^\n]*?每[週周]([一二三四五六日天])[^\d]*?(\d{1,2})[時时](\d{1,2})分/)
+  if (!m) m = a.content.match(/播出[：:][^\n]*?(\d{1,2})[時时](\d{1,2})分/)
+  if (!m) return null
+  let h = parseInt(m[2], 10)
+  if (h >= 24) h -= 24
+  return { wd: m[1] ? WEEK_MAP[m[1]] : null, deep: m[0].includes('深夜'), h, mm: parseInt(m[3], 10) }
+}
+
+function airTimeOf(a) {
+  const air = airOf(a)
+  if (!air) return ''
+  const hh = air.h < 10 ? '0' + air.h : air.h
+  const mm = air.mm < 10 ? '0' + air.mm : air.mm
+  return hh + ':' + mm
+}
+
+function airLiveOf(a) {
+  const air = airOf(a)
+  if (!air || air.wd == null) return false
+  const t = new Date(now.value)
+  const wi = (t.getDay() + 6) % 7
+  const airWi = air.deep ? (air.wd + 1) % 7 : air.wd
+  if (airWi !== wi) return false
+  const start = new Date(t.getFullYear(), t.getMonth(), t.getDate(), air.h, air.mm, 0)
+  return t.getTime() >= start.getTime() && t.getTime() < start.getTime() + 35 * 60000
 }
 
 function scrollToToday() {
   if (searchQuery.value.trim()) return
-  const today = dayNameSun(new Date().getDay())
+  activeDay.value = todayWi
   const sections = document.querySelectorAll('.day-section')
-  for (let i = 0; i < sections.length; i++) {
-    const dh = sections[i].querySelector('.day-h')
-    if (dh && dh.textContent.trim() === today) {
-      sections[i].classList.add('current')
-      setTimeout((el) => { el.scrollIntoView({ behavior: 'smooth', block: 'center' }) }, 100, sections[i])
-      break
+  for (const s of sections) {
+    if (s.dataset.wi === String(todayWi)) {
+      s.classList.add('current')
+      setTimeout((el) => { el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, 100, s)
+      return
     }
   }
 }
@@ -121,10 +208,14 @@ watch(() => route.path, (p) => {
 
 onMounted(() => {
   load()
+  startTick()
   document.addEventListener('click', onDocClick)
+  window.addEventListener('scroll', onScroll, { passive: true })
 })
 onBeforeUnmount(() => {
+  clearInterval(tickTimer)
   document.removeEventListener('click', onDocClick)
+  window.removeEventListener('scroll', onScroll)
 })
 </script>
 
@@ -148,24 +239,47 @@ onBeforeUnmount(() => {
       </div>
       <span v-html="statsHtml"></span>
     </div>
-    <main class="main" id="listWrap">
+      <div class="day-layout">
+        <nav class="day-nav" aria-label="weekly day navigation">
+          <button v-for="d in navDays" :key="d.wi" type="button" class="day-nav-btn" :class="{ on: activeDay === d.wi }" :aria-current="activeDay === d.wi ? 'true' : undefined" @click="scrollToDay(d.wi)">
+            <span class="day-nav-dot" aria-hidden="true"></span>
+            <span class="day-nav-name">{{ d.label }}</span>
+          </button>
+        </nav>
+        <main class="main" id="listWrap">
       <div v-if="loading" class="loading"><span class="spinner"></span>{{ t('loading') }}</div>
       <div v-else-if="err" class="empty show">{{ err }}</div>
       <div v-else-if="!filtered.length" class="empty show">{{ searchQuery.trim() ? t('emptyBangumi') : t('empty') }}</div>
       <div v-else id="list">
-        <div v-for="day in weekdays" :key="day.label" class="day-section">
+        <div v-for="(day, i) in weekdays" :key="day.label" class="day-section" :data-wi="i">
           <template v-if="day.items.length">
-            <div class="day-h">{{ day.label }}<span class="day-count">{{ day.items.length }}</span></div>
+            <div class="day-h">{{ day.label }}<span class="day-count">{{ day.items.length }}</span><span class="day-date">{{ day.date }}<b v-if="day.isToday">（今天）</b></span></div>
             <div class="card-list">
               <div v-for="a in day.items" :key="a.id" class="card" :data-id="a.id" @click="openDetail(a)">
-                <div class="card-img" :style="imgPath(a, seasonKey(calYear.value, calSeason.value)) ? { '--img': 'url(' + imgPath(a, seasonKey(calYear.value, calSeason.value)) + ')' } : {}"></div>
-                <button class="fav-btn" :class="{ on: isFav(a.id) }" :data-id="a.id" @click="onFav($event, a.id)">{{ isFav(a.id) ? '★' : '☆' }}</button>
+                <div class="card-img" :style="imgPath(a, seasonKey(calYear.value, calSeason.value)) ? { '--img': 'url(' + imgPath(a, seasonKey(calYear.value, calSeason.value)) + ')' } : {}">
+                  <template v-if="metaOf(a)">
+                    <span v-if="metaOf(a).score > 0" class="card-score">{{ metaOf(a).score }}<i>{{ t('calScore') }}</i></span>
+                    <div v-if="metaOf(a).tags.length" class="card-meta-bar">
+                      <div class="card-tags">
+                        <span v-for="(tg, ti) in metaOf(a).tags" :key="ti">{{ tg }}</span>
+                      </div>
+                    </div>
+                  </template>
+                  <span v-if="airTimeOf(a)" class="air-badge" :class="{ live: airLiveOf(a) }">
+                    {{ airTimeOf(a) }}
+                    <b v-if="airLiveOf(a)" class="air-live">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.247 7.761a6 6 0 0 1 0 8.478"></path><path d="M19.075 4.933a10 10 0 0 1 0 14.134"></path><path d="M4.925 19.067a10 10 0 0 1 0-14.134"></path><path d="M7.753 16.239a6 6 0 0 1 0-8.478"></path><circle cx="12" cy="12" r="2"></circle></svg>
+                      {{ t('airLive') }}
+                    </b>
+                  </span>
+                </div>
                 <div class="card-title">{{ a.title }}</div>
               </div>
             </div>
           </template>
         </div>
-      </div>
-    </main>
+        </div>
+      </main>
+    </div>
   </div>
 </template>

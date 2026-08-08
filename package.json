@@ -1,7 +1,7 @@
 {
   "name": "ani-calendar",
   "version": "2.0.0",
-  "description": "鐣粍鏃ュ巻 - 鏂扮暘璧勮 路 姣忔棩杩界暘",
+  "description": "Nekomi",
   "private": true,
   "scripts": {
     "start": "node server.js",

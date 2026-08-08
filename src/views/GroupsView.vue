@@ -74,7 +74,9 @@ watch(() => route.fullPath, load, { immediate: true })
             <div class="group-body">
               <div class="group-name" :title="g.name">{{ g.name }}</div>
               <div class="group-count" v-html="t('groupRes', { n: g.count })"></div>
-              <a class="group-rss" :href="'/rss/group/' + encodeURIComponent(g.name)" :title="t('subscribeGroup')" target="_blank" @click.stop>📡 RSS</a>
+              <a class="rss-icon rss-float" :href="'/rss/group/' + encodeURIComponent(g.name)" :aria-label="t('subscribeGroup')" :title="t('subscribeGroup')" target="_blank" @click.stop>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg>
+              </a>
             </div>
           </div>
         </div>

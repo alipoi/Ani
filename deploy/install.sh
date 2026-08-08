@@ -30,27 +30,23 @@ cp deploy/ani.service /etc/systemd/system/ani.service
 systemctl daemon-reload
 systemctl enable --now ani
 
-echo "==> 安装 Caddy（自动 HTTPS）"
-if ! command -v caddy >/dev/null 2>&1; then
-  apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl
-  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list
-  apt-get update
-  apt-get install -y caddy
-fi
-# 先编辑 deploy/Caddyfile 里的域名，再执行下一步
-cp deploy/Caddyfile /etc/caddy/Caddyfile
-systemctl enable --now caddy
-
-echo "==> 配置 cron：快速增量爬虫每 2 分钟 + 每日备份"
-chmod +x deploy/crawl.sh deploy/backup.sh
+echo "==> 配置 cron：资源爬虫每 2 分钟 + 每周季度时间表 + 每日备份"
+chmod +x deploy/crawl.sh deploy/schedule.sh deploy/backup.sh
 (crontab -l 2>/dev/null | grep -v '/opt/ani' || true
  echo '*/2 * * * * /opt/ani/deploy/crawl.sh'
+ echo '15 3 * * 0 /opt/ani/deploy/schedule.sh'
  echo '30 4 * * * /opt/ani/deploy/backup.sh') | crontab -
 
 echo "==> 完成"
 echo "  服务: systemctl status ani"
 echo "  日志: journalctl -u ani -f"
-echo "  爬虫: cat /var/log/ani-crawl.log"
+echo "  资源爬虫: cat /var/log/ani-crawl.log"
+echo "  季度爬虫: cat /var/log/ani-schedule.log"
 echo "  备份: ls /opt/ani-backup"
-echo "  提示: 编辑 /etc/caddy/Caddyfile 填好域名后 systemctl reload caddy；首次数据可把本机 data/resources.db 拷到 /opt/ani/data/ 后重启 ani"
+echo "  提示: 本脚本不装 Caddy，默认走 Cloudflare CDN（Node 直连 :80）"
+echo "  Cloudflare 配置:"
+echo "    1. DNS 里把 nekomi.cn 添加 A 记录指向本机公网 IP，代理状态选「已代理（橙色云朵）」"
+echo "    2. VCN 安全列表放行入站 80 端口（443 可不开，由 CF 边缘终结 TLS）"
+echo "    3. SSL/TLS 模式选 Flexible（CF→源站走 HTTP :80）"
+echo "    4. 缓存规则：建议对 / 与 /api/ 跳过缓存或用 Edge Cache TTL 0，避免 HTML 被缓存成旧版"
+echo "  首次数据可把本机 data/ 拷到 /opt/ani/data/ 后重启 ani"

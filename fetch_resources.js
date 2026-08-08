@@ -820,7 +820,8 @@ var running = 0;
 function worker() {
   return new Promise(function(resolve) {
     function next() {
-      if (queue.length === 0) { resolve(); return; }
+      if (queue.length === 0 && running === 0) { resolve(); return; }
+      if (queue.length === 0) return;
       var job = queue.shift();
       running++;
       job().then(function() { running--; next(); }).catch(function() { running--; next(); });
@@ -1004,7 +1005,10 @@ async function main() {
 
   if (doRss) {
     console.log('RSS incremental...');
-    await rssIncremental(bangumi);
+    var onlyId = arg('--rss-one');
+    var rssList = onlyId ? bangumi.filter(function(b) { return b.id === onlyId; }) : bangumi;
+    if (onlyId) console.log('RSS restricted to ' + onlyId + ' (' + rssList.length + ' entry)');
+    await rssIncremental(rssList);
   }
 
   if (doMatch) {
