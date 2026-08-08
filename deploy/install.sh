@@ -7,14 +7,22 @@ APP_DIR=/opt/ani
 APP_USER=ani
 REPO_URL=${REPO_URL:-https://github.com/alipoi/Ani.git}
 
-echo "==> 安装 Node.js 20"
-if ! command -v node >/dev/null 2>&1; then
-  curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+echo "==> 安装 Node.js 22"
+NEED_NODE=0
+if ! command -v node >/dev/null 2>&1; then NEED_NODE=1; fi
+if command -v node >/dev/null 2>&1 && [ "$(node -p 'Number(process.versions.node.split(".")[0]) < 22')" = "true" ]; then NEED_NODE=1; fi
+if [ "$NEED_NODE" = "1" ]; then
+  curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
   apt-get install -y nodejs build-essential python3
 fi
 
 echo "==> 创建用户与目录"
-id -u "$APP_USER" >/dev/null 2>&1 || useradd -r -s /usr/sbin/nologin "$APP_USER"
+if ! id -u "$APP_USER" >/dev/null 2>&1; then
+  useradd -r -m -s /usr/sbin/nologin "$APP_USER"
+else
+  mkdir -p "/home/$APP_USER"
+  chown "$APP_USER:$APP_USER" "/home/$APP_USER"
+fi
 mkdir -p "$APP_DIR"
 chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 
