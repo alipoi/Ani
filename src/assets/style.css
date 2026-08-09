@@ -1018,6 +1018,8 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 }
 .lightbox-close:hover { background: rgba(0,0,0,.7); transform: rotate(90deg); }
 
+.mobile-tabbar { display: none; }
+
 @media (max-width: 640px) {
   .day-layout { flex-direction: column; align-items: stretch; gap: 10px; }
   .day-nav {
@@ -1034,6 +1036,64 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   .day-nav::-webkit-scrollbar { display: none; }
   .day-nav-btn { flex-direction: column; gap: 3px; padding: 8px 6px; min-width: 52px; }
   .day-layout > .main { flex: 1 1 auto; width: 100%; max-width: 100%; }
+
+  /* 底部 TabBar（App 式） */
+  .mobile-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 120;
+    display: flex;
+    border-top: 1px solid var(--border-light);
+    background: rgba(255, 255, 255, .92);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  html.dark .mobile-tabbar { background: rgba(38, 28, 30, .92); }
+  .nav-tabs { display: none; }
+  .mtab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 8px 0 9px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-decoration: none;
+    transition: color .2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mtab.on { color: var(--primary); }
+  .mtab:hover { color: var(--primary); }
+
+  /* 页面底部留出 TabBar 高度，避免遮挡 */
+  .site-footer { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .main { padding-bottom: calc(58px + env(safe-area-inset-bottom)) !important; }
+
+  /* 季度选择器移动到右下角悬浮按钮 */
+  .stats-bar { padding-bottom: 12px; }
+  .stats-bar .dd {
+    position: fixed;
+    right: 16px;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    z-index: 110;
+  }
+  .season-menu {
+    top: auto;
+    left: auto;
+    right: 0;
+    bottom: calc(100% + 8px);
+    max-height: 56vh;
+    overflow-y: auto;
+  }
+  .season-picker {
+    box-shadow: 0 6px 18px rgba(232, 72, 90, .28);
+  }
 }
 
 @media (max-width: 700px) {
@@ -1618,3 +1678,8 @@ html.dark ::-webkit-scrollbar-track {
 }
 
 html.dark ::-webkit-scrollbar-thumb { background: color-mix(in srgb, #ff6b9d 55%, transparent); }
+
+/* 追加在文件末尾：确保覆盖 700px 断点的 .gotop 定义 */
+@media (max-width: 640px) {
+  .gotop { bottom: calc(124px + env(safe-area-inset-bottom)); }
+}

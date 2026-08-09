@@ -3,6 +3,7 @@ import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import SiteHeader from './components/SiteHeader.vue'
+import MobileTabBar from './components/MobileTabBar.vue'
 import CtxMenu from './components/CtxMenu.vue'
 import DetailOverlay from './components/DetailOverlay.vue'
 import Lightbox from './components/Lightbox.vue'
@@ -79,5 +80,6 @@ watch(() => overlayOpen.value, (v) => {
     <DetailOverlay />
     <Lightbox />
     <button class="gotop" :class="{ show: showGoTop }" @click="goTop">↑</button>
+    <MobileTabBar />
   </div>
 </template>
