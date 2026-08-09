@@ -1052,7 +1052,6 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
     padding-bottom: env(safe-area-inset-bottom);
   }
   html.dark .mobile-tabbar { background: rgba(38, 28, 30, .92); }
-  .nav-tabs { display: none; }
   .mtab {
     flex: 1;
     display: flex;
@@ -1682,4 +1681,5 @@ html.dark ::-webkit-scrollbar-thumb { background: color-mix(in srgb, #ff6b9d 55%
 /* 追加在文件末尾：确保覆盖 700px 断点的 .gotop 定义 */
 @media (max-width: 640px) {
   .gotop { bottom: calc(124px + env(safe-area-inset-bottom)); }
+  .nav-tabs { display: none; }
 }
