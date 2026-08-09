@@ -3,7 +3,6 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { API, apiGet } from '../api'
-import { esc } from '../utils'
 import ResourceRow from '../components/ResourceRow.vue'
 import Pager from '../components/Pager.vue'
 
@@ -23,11 +22,6 @@ const page = computed(() => {
   return p > 0 ? p : 1
 })
 const pages = computed(() => Math.ceil(total.value / size))
-
-const statsHtml = computed(() =>
-  t('statsRes') +
-  (term.value ? t('statsSearch', { q: esc(term.value) }) : '') +
-  t('statsCount', { n: total.value }))
 
 function go(p) {
   const query = { ...route.query }
@@ -58,7 +52,6 @@ watch(() => route.fullPath, load, { immediate: true })
 
 <template>
   <div>
-    <div class="stats-bar res-stats" v-html="statsHtml"></div>
     <main class="main">
       <div v-if="loading" class="loading"><span class="spinner"></span>{{ t('loading') }}</div>
       <div v-else-if="err" class="empty show">{{ t('loadErr') }}</div>

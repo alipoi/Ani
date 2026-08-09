@@ -3,7 +3,6 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { API, apiGet } from '../api'
-import { esc } from '../utils'
 import Pager from '../components/Pager.vue'
 
 const { t } = useI18n()
@@ -22,11 +21,6 @@ const page = computed(() => {
 })
 const pages = computed(() => Math.ceil(list.value.length / size))
 const slice = computed(() => list.value.slice((page.value - 1) * size, page.value * size))
-
-const statsHtml = computed(() =>
-  t('statsRes') +
-  (term.value ? t('statsSearch', { q: esc(term.value) }) : '') +
-  t('statsGroupCount', { n: list.value.length }))
 
 function initial(name) {
   if (!name) return '?'
@@ -62,7 +56,6 @@ watch(() => route.fullPath, load, { immediate: true })
 
 <template>
   <div>
-    <div class="stats-bar res-stats" v-html="statsHtml"></div>
     <main class="main">
       <div v-if="loading" class="loading"><span class="spinner"></span>{{ t('loading') }}</div>
       <div v-else-if="err" class="empty show">{{ t('loadErr') }}</div>

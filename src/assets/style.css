@@ -270,7 +270,7 @@ html.dark .dd-menu { box-shadow: 0 8px 24px rgba(0,0,0,.5); }
 }
 .season-picker:hover { border-color: var(--primary); color: var(--primary); }
 .sp-arrow { font-size: 11px; opacity: .6; }
-.season-menu { min-width: 240px; padding: 12px; gap: 6px; left: 0; right: auto; }
+.season-menu { min-width: 240px; padding: 12px; gap: 6px; right: 0; left: auto; }
 .sm-label { font-size: 11px; font-weight: 600; color: var(--text2); padding: 2px 4px; }
 .sm-years, .sm-seasons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .sm-years { grid-template-columns: repeat(5, 1fr); }
@@ -410,6 +410,19 @@ html.dark .search-input {
   padding: 24px 0 40px;
 }
 
+/* 日历页工具条（年份/季度选择） */
+.cal-toolbar {
+  width: min(1100px, 100% - clamp(16px, 3vw, 40px));
+  margin: 0 auto;
+  padding: 14px 0 0;
+  display: flex;
+  justify-content: flex-end;
+}
+.cal-toolbar .dd {
+  position: relative;
+  display: inline-flex;
+}
+
 .stats-bar {
   font-size: 13px;
   color: var(--text2);
@@ -420,13 +433,6 @@ html.dark .search-input {
   font-weight: 500;
   flex-wrap: wrap;
   min-width: 0;
-}
-.stats-bar > span:last-child {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1 1 auto;
 }
 .stats-bar .stats-icon { font-size: 15px; }
 .stats-bar .stats-num {
@@ -1100,8 +1106,8 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   .main { padding-bottom: calc(58px + env(safe-area-inset-bottom)) !important; }
 
   /* 季度选择器移动到右下角悬浮按钮 */
-  .stats-bar { height: 0; overflow: visible; padding: 0; }
-  .stats-bar .dd {
+  .cal-toolbar { height: 0; padding: 0; }
+  .cal-toolbar .dd {
     position: fixed;
     right: 16px;
     bottom: calc(72px + env(safe-area-inset-bottom));

@@ -220,7 +220,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div>
-    <div class="stats-bar">
+    <div class="cal-toolbar">
       <div class="dd" @click.stop>
         <button class="season-picker" @click="seasonMenu = !seasonMenu" :aria-expanded="seasonMenu">
           📅 {{ calYear }}年{{ t('season.' + calSeason) }} <span class="sp-arrow">▾</span>
@@ -236,8 +236,8 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </div>
-      </div>
-      <div class="day-layout">
+    </div>
+    <div class="day-layout">
         <nav class="day-nav" aria-label="weekly day navigation">
           <button v-for="d in navDays" :key="d.wi" type="button" class="day-nav-btn" :class="{ on: activeDay === d.wi }" :aria-current="activeDay === d.wi ? 'true' : undefined" @click="scrollToDay(d.wi)">
             <span class="day-nav-dot" aria-hidden="true"></span>
