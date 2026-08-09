@@ -1032,16 +1032,24 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 @media (max-width: 640px) {
   .day-layout { flex-direction: column; align-items: stretch; gap: 10px; }
   .day-nav {
-    position: static;
+    position: sticky;
+    top: 71px;
     transform: none;
     flex-direction: row;
     flex-wrap: nowrap;
     width: 100%;
     gap: 6px;
     overflow-x: auto;
-    padding-bottom: 4px;
+    padding: 8px 0 4px;
+    margin: 0 -4px;
     scrollbar-width: none;
+    background: rgba(254, 246, 247, .8);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    z-index: 95;
+    border-bottom: 1px solid transparent;
   }
+  html.dark .day-nav { background: rgba(26, 16, 18, .85); }
   .day-nav::-webkit-scrollbar { display: none; }
   .day-nav-btn { flex-direction: column; gap: 3px; padding: 8px 6px; min-width: 52px; }
   .day-layout > .main { flex: 1 1 auto; width: 100%; max-width: 100%; }
@@ -1084,7 +1092,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   .main { padding-bottom: calc(58px + env(safe-area-inset-bottom)) !important; }
 
   /* 季度选择器移动到右下角悬浮按钮 */
-  .stats-bar { padding-bottom: 12px; }
+  .stats-bar { height: 0; overflow: visible; padding: 0; }
   .stats-bar .dd {
     position: fixed;
     right: 16px;
@@ -1133,7 +1141,18 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
     position: static;
     margin: 10px 0 -26px auto;
   }
-  .header-inner { padding: 10px 0; gap: 8px; }
+    /* 移动端 header 强制单行固定高度，day-nav 才能精确吸顶在下方 */
+  .header-inner {
+    flex-wrap: nowrap;
+    height: 70px;
+    padding: 10px 0;
+    gap: 8px;
+    align-items: center;
+  }
+  .logo { flex-shrink: 0; }
+  .nav-row { flex: 1 1 auto; min-width: 0; justify-content: flex-end; }
+  .search-input { flex: 0 1 auto; width: auto; min-width: 56px; }
+  .header { height: 71px; }
 .gotop { right: 16px; bottom: 70px; width: 36px; height: 36px; font-size: 17px; }
 }
 

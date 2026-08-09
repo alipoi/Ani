@@ -132,13 +132,6 @@ function onScroll() {
   })
 }
 
-const statsHtml = computed(() => {
-  const term = searchQuery.value.trim()
-  return term
-    ? t('statsFound', { q: term, n: filtered.value.length })
-    : t('statsTotal', { n: filtered.value.length })
-})
-
 function openDetail(a) {
   overlayData.value = { a, seasonKey: seasonKey(calYear.value, calSeason.value) }
   overlayOpen.value = true
@@ -243,8 +236,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </div>
-      <span v-html="statsHtml"></span>
-    </div>
+      </div>
       <div class="day-layout">
         <nav class="day-nav" aria-label="weekly day navigation">
           <button v-for="d in navDays" :key="d.wi" type="button" class="day-nav-btn" :class="{ on: activeDay === d.wi }" :aria-current="activeDay === d.wi ? 'true' : undefined" @click="scrollToDay(d.wi)">
