@@ -94,7 +94,7 @@ html.dark .header {
 }
 
 .header-inner {
-  max-width: 1100px;
+  width: min(1100px, 100% - 2 * clamp(8px, 2.5vw, 32px));
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -333,7 +333,7 @@ html.dark .search-input {
   display: flex;
   gap: 14px;
   align-items: flex-start;
-  max-width: 1100px;
+  width: min(1100px, 100% - 2 * clamp(8px, 2.5vw, 32px));
   margin: 0 auto;
 }
 
@@ -405,9 +405,9 @@ html.dark .search-input {
 .main {
   position: relative;
   z-index: 1;
-  max-width: 1100px;
+  width: min(1100px, 100% - clamp(16px, 3vw, 40px));
   margin: 0 auto;
-  padding: 24px 16px 40px;
+  padding: 24px 0 40px;
 }
 
 .stats-bar {
@@ -1018,8 +1018,29 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 }
 .lightbox-close:hover { background: rgba(0,0,0,.7); transform: rotate(90deg); }
 
+@media (max-width: 640px) {
+  .day-layout { flex-direction: column; align-items: stretch; gap: 10px; }
+  .day-nav {
+    position: static;
+    transform: none;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    width: 100%;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .day-nav::-webkit-scrollbar { display: none; }
+  .day-nav-btn { flex-direction: column; gap: 3px; padding: 8px 6px; min-width: 52px; }
+  .day-layout > .main { flex: 1 1 auto; width: 100%; max-width: 100%; }
+}
+
 @media (max-width: 700px) {
   .card-list { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding: 14px; }
+  .res-table-head, .res-row { grid-template-columns: 40px 1fr 80px 40px; gap: 8px; padding: 9px 12px; }
+  .res-time { display: none; }
+  .res-table-head :nth-child(4) { display: none; }
   .search-input { width: 130px; }
   .search-input:focus { width: 155px; }
   .detail-top { flex-direction: column; align-items: center; text-align: center; }
@@ -1049,7 +1070,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 }
 
 @media (max-width: 460px) {
-  .card-list { grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; }
+  .card-list { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; padding: 12px; }
   .card-title { font-size: 11px; -webkit-line-clamp: 2; }
   .card-tags span { font-size: 8px; padding: 0 4px; }
   .card-tags { gap: 2px; }
@@ -1057,7 +1078,10 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   .air-badge { font-size: 9px; padding: 1px 5px; }
   .search-input { width: 100px; font-size: 12px; padding-left: 28px; background-size: 12px; }
   .search-input:focus { width: 120px; }
-  .header-inner { gap: 6px; }
+.header-inner { gap: 6px; }
+  .res-table-head, .res-row { grid-template-columns: 40px 1fr 36px; gap: 6px; padding: 8px 10px; }
+  .res-size { display: none; }
+  .res-table-head :nth-child(3) { display: none; }
   .logo-text { font-size: 17px; }
   .logo-icon { font-size: 18px; }
   .nav-row select { font-size: 12px; padding: 5px 8px; padding-right: 20px; }
@@ -1510,7 +1534,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 .res-desc a { color: var(--primary); text-decoration: none; word-break: break-all; }
 .res-desc a:hover { text-decoration: underline; }
 
-.res-page { max-width: 960px; margin: 0 auto; padding: 16px 16px 56px; }
+.res-page { width: min(960px, 100% - clamp(16px, 3vw, 40px)); margin: 0 auto; padding: 16px 0 56px; }
 .res-page-head { display: flex; align-items: center; margin-bottom: 14px; }
 .res-page-back { padding: 6px 16px; }
 .res-layout {
