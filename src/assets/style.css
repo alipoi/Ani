@@ -1027,6 +1027,14 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 }
 .lightbox-close:hover { background: rgba(0,0,0,.7); transform: rotate(90deg); }
 
+.res-table-head, .res-row {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 44px 1fr 95px 120px 40px;
+  gap: 10px;
+  padding: 10px 16px;
+}
+
 .mobile-tabbar { display: none; }
 
 @media (max-width: 640px) {
@@ -1053,6 +1061,9 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   .day-nav::-webkit-scrollbar { display: none; }
   .day-nav-btn { flex-direction: column; gap: 3px; padding: 8px 6px; min-width: 52px; }
   .day-layout > .main { flex: 1 1 auto; width: 100%; max-width: 100%; }
+
+  /* 资源页统计条移动端隐藏（信息冗余） */
+  .res-stats { display: none; }
 
   /* 底部 TabBar（App 式） */
   .mobile-tabbar {
@@ -1169,6 +1180,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   .res-table-head, .res-row { grid-template-columns: 40px 1fr 36px; gap: 6px; padding: 8px 10px; }
   .res-size { display: none; }
   .res-table-head :nth-child(3) { display: none; }
+  .res-table-head span:nth-child(5) { justify-self: end; }
   .logo-text { font-size: 17px; }
   .logo-icon { font-size: 18px; }
   .nav-row select { font-size: 12px; padding: 5px 8px; padding-right: 20px; }
@@ -1218,14 +1230,6 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
-}
-
-.res-table-head, .res-row {
-  display: grid;
-  grid-template-columns: 44px 1fr 95px 120px 40px;
-  gap: 10px;
-  padding: 10px 16px;
-  align-items: center;
 }
 
 .res-table-head {
@@ -1658,15 +1662,6 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 
 
 @media (max-width: 700px) {
-  .res-table-head, .res-row {
-    grid-template-columns: 40px 1fr 80px 40px;
-  }
-  .res-table-head span:nth-child(4), .res-row .res-time {
-    display: none;
-  }
-  .res-table-head span:nth-child(3), .res-row .res-size { justify-self: end; }
-  .res-row.mini { grid-template-columns: 40px 1fr 60px 36px; }
-  .res-row.mini .res-time { display: none; }
   .nav-tabs a { padding: 4px 10px; font-size: 12px; }
 }
 

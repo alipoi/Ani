@@ -58,7 +58,7 @@ watch(() => route.fullPath, load, { immediate: true })
 
 <template>
   <div>
-    <div class="stats-bar" v-html="statsHtml"></div>
+    <div class="stats-bar res-stats" v-html="statsHtml"></div>
     <main class="main">
       <div v-if="loading" class="loading"><span class="spinner"></span>{{ t('loading') }}</div>
       <div v-else-if="err" class="empty show">{{ t('loadErr') }}</div>
