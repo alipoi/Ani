@@ -1464,25 +1464,18 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   margin-top: 4px;
 }
 
-/* 字幕组页移动端横排滑动（弹性两列自适应） */
+/* 字幕组页移动端竖向网格（一行两张） */
 @media (max-width: 700px) {
   .group-grid {
-    display: flex;
-    flex-wrap: nowrap;
+    display: grid;
+grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
     gap: 10px;
-    overflow-x: auto;
-    margin: 0 -4px;
-    padding: 4px;
-    scrollbar-width: none;
-    scroll-snap-type: x proximity;
+    margin: 0;
+    padding: 0;
   }
-  .group-grid::-webkit-scrollbar { display: none; }
   .group-card {
-    flex: 0 0 44%;
-    min-width: 158px;
-    max-width: 220px;
-    scroll-snap-align: start;
-    animation: none;
+    min-width: 0;
+    animation: fadeUp .3s ease backwards;
   }
 }
 
