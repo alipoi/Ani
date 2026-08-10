@@ -32,7 +32,7 @@ function go(p) {
 
 function openDetail(r) {
   try { sessionStorage.setItem('aniscroll:' + route.fullPath, String(window.scrollY)) } catch (e) {}
-  window.open(window.location.origin + '/res/' + r.info_hash + '?ret=' + encodeURIComponent(route.fullPath), '_blank')
+  router.push({ path: '/res/' + r.info_hash })
 }
 
 function restoreScroll() {
