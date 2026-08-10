@@ -50,6 +50,8 @@ function openRelated(r) {
 }
 
 function goBack() {
+  const ret = route.query.ret
+  if (typeof ret === 'string' && ret.startsWith('/')) { router.push(ret); return }
   if (window.history.state && window.history.state.back) router.back()
   else router.push('/classic')
 }

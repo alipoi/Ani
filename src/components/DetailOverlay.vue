@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import { overlayOpen, overlayData, lightboxOpen, lightboxSrc } from '../globals'
 import { API, apiGet } from '../api'
 import { esc, imgPath } from '../utils'
@@ -8,6 +9,7 @@ import { bgMeta, loadMetaFor } from '../bgmeta'
 import ResourceRow from './ResourceRow.vue'
 
 const { t } = useI18n()
+const route = useRoute()
 
 const resources = ref(null)
 const err = ref(false)
@@ -75,7 +77,7 @@ function openImg() {
 }
 
 function openRes(r) {
-  window.open(window.location.origin + '/res/' + r.info_hash, '_blank')
+  window.open(window.location.origin + '/res/' + r.info_hash + '?ret=' + encodeURIComponent(route.fullPath), '_blank')
 }
 
 function close() {

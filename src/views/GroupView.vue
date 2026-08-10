@@ -39,7 +39,7 @@ function go(p) {
 }
 
 function openDetail(r) {
-  window.open(window.location.origin + '/res/' + r.info_hash, '_blank')
+  window.open(window.location.origin + '/res/' + r.info_hash + '?ret=' + encodeURIComponent(route.fullPath), '_blank')
 }
 
 function load() {
