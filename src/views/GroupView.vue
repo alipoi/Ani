@@ -39,7 +39,18 @@ function go(p) {
 }
 
 function openDetail(r) {
+  try { sessionStorage.setItem('aniscroll:' + route.fullPath, String(window.scrollY)) } catch (e) {}
   window.open(window.location.origin + '/res/' + r.info_hash + '?ret=' + encodeURIComponent(route.fullPath), '_blank')
+}
+
+function restoreScroll() {
+  try {
+    const key = 'aniscroll:' + route.fullPath
+    const y = parseInt(sessionStorage.getItem(key), 10)
+    if (!(y > 0)) return
+    sessionStorage.removeItem(key)
+    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, y)))
+  } catch (e) {}
 }
 
 function load() {
@@ -52,7 +63,10 @@ function load() {
       if (page.value > pages.value && pages.value > 0) { go(pages.value); return }
     })
     .catch(() => { err.value = true })
-    .finally(() => { loading.value = false })
+    .finally(() => {
+      loading.value = false
+      restoreScroll()
+    })
 }
 
 watch(() => route.fullPath, load, { immediate: true })
