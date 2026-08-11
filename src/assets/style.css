@@ -1670,11 +1670,10 @@ grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
   .res-row.mini .res-title {
     flex: 1 1 auto;
     min-width: 0;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: unset;
     white-space: normal;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    display: block;
+    overflow: visible;
   }
   .res-row.mini .res-magnet {
     flex: 0 0 auto;
