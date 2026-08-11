@@ -1844,6 +1844,8 @@ html.dark ::-webkit-scrollbar-thumb { background: color-mix(in srgb, #ff6b9d 55%
 
 /* 大屏桌面端：加宽内容区；卡片列数随视口自适应（参考 anibt 断点），封面放大 */
 @media (min-width: 1200px) {
+  .header { padding: 0; }
+  .header-inner,
   .day-layout, .cal-toolbar {
     width: min(1440px, 100% - 2 * clamp(8px, 2.5vw, 32px));
   }
