@@ -630,10 +630,10 @@ html.dark .search-input {
   width: 100%;
   aspect-ratio: 3/4;
   overflow: hidden;
-  background: var(--bg);
+background: var(--bg);
   background-image: var(--img, none);
   cursor: pointer;
-  background-size: contain;
+  background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   border-radius: var(--radius-sm);
