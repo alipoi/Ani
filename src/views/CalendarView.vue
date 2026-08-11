@@ -312,7 +312,7 @@ onBeforeUnmount(() => {
                       </b>
                     </span>
                   </div>
-                  <div class="card-title">{{ a.title }}</div>
+                  <div class="card-title" @click="openDetail(a)">{{ a.title }}</div>
                 </div>
                 <div v-if="expandedId === a.id" class="expand-panel" data-testid="anime-expansion-panel">
                   <button class="expand-close" :aria-label="t('collapse')" :title="t('collapse')" @click="expandedId = null">✕</button>

@@ -756,6 +756,7 @@ html.dark .search-input {
   -webkit-box-orient: vertical;
   line-height: 1.4;
   padding: 0 2px;
+  cursor: pointer;
 }
 
 /* ---------- cover click expansion panel (desktop) ---------- */
