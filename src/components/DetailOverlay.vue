@@ -1,18 +1,11 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
 import { overlayOpen, overlayData, lightboxOpen, lightboxSrc } from '../globals'
-import { API, apiGet } from '../api'
 import { esc, imgPath } from '../utils'
 import { bgMeta, loadMetaFor } from '../bgmeta'
-import ResourceRow from './ResourceRow.vue'
 
 const { t } = useI18n()
-const router = useRouter()
-
-const resources = ref(null)
-const err = ref(false)
 
 function fmtFields(content) {
   let out = ''
@@ -76,10 +69,6 @@ function openImg() {
   lightboxOpen.value = true
 }
 
-function openRes(r) {
-  router.push('/res/' + r.info_hash)
-}
-
 function close() {
   overlayOpen.value = false
 }
@@ -89,11 +78,6 @@ watch(overlayOpen, (open) => {
   const a = overlayData.value
   if (!a) return
   loadMetaFor(a.a, a.seasonKey)
-  resources.value = null
-  err.value = false
-  apiGet(API.bangumi(a.seasonKey, a.a.id))
-    .then((d) => { resources.value = d })
-    .catch(() => { err.value = true })
 })
 </script>
 
@@ -127,19 +111,6 @@ watch(overlayOpen, (open) => {
           </div>
         </div>
         <div v-if="overlayData.a.content" class="detail-body" v-html="fmtFields(overlayData.a.content)"></div>
-        <div class="detail-res">
-          <div class="detail-res-h">{{ t('resUpdate') }}</div>
-          <div v-if="err" class="res-empty">{{ t('noRes') }}</div>
-          <div v-else-if="!resources" class="res-loading">{{ t('loading') }}</div>
-          <template v-else>
-            <div v-if="!resources.total" class="res-empty">{{ t('noRes') }}</div>
-            <div v-else class="res-list">
-              <ResourceRow v-for="r in resources.list" :key="r.info_hash" :r="r" mini @open="openRes" />
-            </div>
-            <div class="res-more">
-              <span v-if="resources.total" class="res-total" v-html="t('resCount', { n: resources.total })"></span>
-            </div>          </template>
-        </div>
       </div>
     </div>
   </div>

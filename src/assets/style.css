@@ -613,7 +613,7 @@ html.dark .search-input {
 }
 
 .card {
-  cursor: pointer;
+  cursor: default;
   border-radius: var(--radius-sm);
   position: relative;
   transition: all .25s cubic-bezier(.4,0,.2,1);
@@ -631,6 +631,7 @@ html.dark .search-input {
   overflow: hidden;
   background: var(--bg);
   background-image: var(--img, none);
+  cursor: pointer;
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
@@ -754,6 +755,132 @@ html.dark .search-input {
   -webkit-box-orient: vertical;
   line-height: 1.4;
   padding: 0 2px;
+}
+
+/* ---------- cover click expansion panel (desktop) ---------- */
+
+.expand-panel {
+  grid-column: 1 / -1;
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  animation: fadeUp .3s ease backwards;
+}
+
+.expand-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--text2);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+}
+.expand-close:hover { background: var(--primary); color: #fff; }
+
+.expand-rss {
+  position: absolute;
+  top: 12px;
+  right: 46px;
+  z-index: 3;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expand-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 74px 12px 14px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg);
+}
+
+.expand-cover {
+  flex-shrink: 0;
+  width: 44px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+  background: var(--bg);
+  background-image: var(--img, none);
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.expand-info { flex: 1 1 auto; min-width: 0; }
+
+.expand-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expand-title-jp {
+  font-size: 12px;
+  color: var(--text3);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expand-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+
+.expand-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+  background: rgba(232, 72, 90, .1);
+  padding: 2px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.expand-res-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+}
+
+.expand-res-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.expand-res {
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 12px 14px;
 }
 
 .overlay {
@@ -1130,8 +1257,10 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   /* 资源页/字幕组页统计条移动端隐藏（信息冗余） */
   .res-stats { display: none; }
   .card-list { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding: 14px; }
-  .res-table-head, .res-row { grid-template-columns: 40px 1fr 80px 40px; gap: 8px; padding: 9px 12px; }
+  .res-table-head, .res-row { grid-template-columns: 1fr 80px 40px; gap: 8px; padding: 9px 12px; }
+  .res-ep { display: none; }
   .res-time { display: none; }
+.res-table-head :nth-child(1) { display: none; }
   .res-table-head :nth-child(4) { display: none; }
   .search-input { width: 130px; }
   .search-input:focus { width: 155px; }
@@ -1182,7 +1311,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   .search-input { width: 100px; font-size: 12px; padding-left: 28px; background-size: 12px; }
   .search-input:focus { width: 120px; }
 .header-inner { gap: 6px; }
-  .res-table-head, .res-row { grid-template-columns: 40px 1fr 36px; gap: 6px; padding: 8px 10px; }
+  .res-table-head, .res-row { grid-template-columns: 1fr 36px; gap: 6px; padding: 8px 10px; }
   .res-size { display: none; }
   .res-table-head :nth-child(3) { display: none; }
   .res-table-head span:nth-child(5) { justify-self: end; }
@@ -1285,6 +1414,11 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   transition: color .15s;
 }
 .res-title .res-title-tag:hover { color: var(--accent); text-decoration: underline; }
+
+/* 移动端资源表：标题吃满宽度并完整显示 */
+@media (max-width: 700px) {
+  .res-title { display: block; -webkit-line-clamp: unset; overflow: visible; }
+}
 
 .res-size { font-size: 12px; color: var(--text2); white-space: nowrap; }
 .res-time { font-size: 12px; color: var(--text3); white-space: nowrap; }

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { API, apiGet } from '../api'
@@ -8,6 +8,7 @@ import { searchQuery } from '../search'
 import { overlayOpen, overlayData } from '../globals'
 import { imgPath } from '../utils'
 import { loadSeasonMeta, bgMeta } from '../bgmeta'
+import ResourceRow from '../components/ResourceRow.vue'
 
 const { t, tm } = useI18n()
 const route = useRoute()
@@ -137,6 +138,45 @@ function openDetail(a) {
   overlayOpen.value = true
 }
 
+const expandedId = ref(null)
+const resCache = new Map()
+
+function onCover(a) {
+  if (window.matchMedia('(min-width: 641px)').matches) toggleExpand(a)
+  else openDetail(a)
+}
+
+function toggleExpand(a) {
+  if (expandedId.value === a.id) { expandedId.value = null; return }
+  expandedId.value = a.id
+  const key = a.seasonKey + ':' + a.id
+  if (resCache.has(key)) return
+  const st = reactive({ list: null, total: 0, err: false })
+  resCache.set(key, st)
+  apiGet(API.bangumi(a.seasonKey, a.id))
+    .then((d) => { st.list = d.list || []; st.total = d.total || 0 })
+    .catch(() => { st.err = true })
+}
+
+function panelOf(a) {
+  return resCache.get(a.seasonKey + ':' + a.id) || null
+}
+
+function panelCoverStyle(a) {
+  const p = imgPath(a)
+  return p ? { '--img': 'url(' + p + ')' } : {}
+}
+
+function fmtPlatform(p) {
+  if (!p) return ''
+  const map = { TV: 'calFmtTv', 剧场版: 'calFmtMovie', OVA: 'calFmtOva', ONA: 'calFmtOna', WEB: 'calFmtWeb' }
+  return t(map[p] || 'calFmtOther')
+}
+
+function openRes(r) {
+  router.push('/res/' + r.info_hash)
+}
+
 function metaOf(a) {
   return bgMeta.get(seasonKey(calYear.value, calSeason.value) + ':' + a.id)
 }
@@ -253,26 +293,57 @@ onBeforeUnmount(() => {
           <template v-if="day.items.length">
             <div class="day-h">{{ day.label }}<span class="day-count">{{ day.items.length }}</span><span v-if="isCurrentSeason" class="day-date">{{ day.date }}<b v-if="day.isToday">（今天）</b></span></div>
             <div class="card-list">
-              <div v-for="a in day.items" :key="a.id" class="card" :data-id="a.id" @click="openDetail(a)">
-                <div class="card-img" :style="imgPath(a, seasonKey(calYear.value, calSeason.value)) ? { '--img': 'url(' + imgPath(a, seasonKey(calYear.value, calSeason.value)) + ')' } : {}">
-                  <template v-if="metaOf(a)">
-                    <span v-if="metaOf(a).score > 0" class="card-score">{{ metaOf(a).score }}<i>{{ t('calScore') }}</i></span>
-                    <div v-if="metaOf(a).tags.length" class="card-meta-bar">
-                      <div class="card-tags">
-                        <span v-for="(tg, ti) in metaOf(a).tags" :key="ti">{{ tg }}</span>
+              <template v-for="a in day.items" :key="a.id">
+                <div class="card" :data-id="a.id" :class="{ on: expandedId === a.id }">
+                  <div class="card-img" :style="imgPath(a, seasonKey(calYear.value, calSeason.value)) ? { '--img': 'url(' + imgPath(a, seasonKey(calYear.value, calSeason.value)) + ')' } : {}" @click="onCover(a)">
+                    <template v-if="metaOf(a)">
+                      <span v-if="metaOf(a).score > 0" class="card-score">{{ metaOf(a).score }}<i>{{ t('calScore') }}</i></span>
+                      <div v-if="metaOf(a).tags.length" class="card-meta-bar">
+                        <div class="card-tags">
+                          <span v-for="(tg, ti) in metaOf(a).tags" :key="ti">{{ tg }}</span>
+                        </div>
+                      </div>
+                    </template>
+                    <span v-if="isCurrentSeason && airTimeOf(a)" class="air-badge" :class="{ live: airLiveOf(a) }">
+                      {{ airTimeOf(a) }}
+                      <b v-if="airLiveOf(a)" class="air-live">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.247 7.761a6 6 0 0 1 0 8.478"></path><path d="M19.075 4.933a10 10 0 0 1 0 14.134"></path><path d="M4.925 19.067a10 10 0 0 1 0-14.134"></path><path d="M7.753 16.239a6 6 0 0 1 0-8.478"></path><circle cx="12" cy="12" r="2"></circle></svg>
+                        {{ t('airLive') }}
+                      </b>
+                    </span>
+                  </div>
+                  <div class="card-title">{{ a.title }}</div>
+                </div>
+                <div v-if="expandedId === a.id" class="expand-panel" data-testid="anime-expansion-panel">
+                  <button class="expand-close" :aria-label="t('collapse')" :title="t('collapse')" @click="expandedId = null">✕</button>
+                  <a class="rss-icon expand-rss" :href="'/rss/bangumi/' + encodeURIComponent(a.seasonKey) + '/' + encodeURIComponent(a.id)" target="_blank" :aria-label="t('rssSubscribe')" :title="t('rssSubscribe')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg>
+                  </a>
+                  <div class="expand-head">
+                    <div class="expand-cover" :style="panelCoverStyle(a)"></div>
+                    <div class="expand-info">
+                      <div class="expand-title" :title="a.title">{{ a.title }}</div>
+                      <div v-if="a.titleJp" class="expand-title-jp">{{ a.titleJp }}</div>
+                      <div v-if="metaOf(a)" class="expand-badges">
+                        <span v-if="fmtPlatform(metaOf(a).platform)" class="expand-badge">{{ fmtPlatform(metaOf(a).platform) }}</span>
+                        <span v-if="metaOf(a).eps" class="expand-badge">{{ t('expandEps', { n: metaOf(a).eps }) }}</span>
                       </div>
                     </div>
-                  </template>
-                  <span v-if="isCurrentSeason && airTimeOf(a)" class="air-badge" :class="{ live: airLiveOf(a) }">
-                    {{ airTimeOf(a) }}
-                    <b v-if="airLiveOf(a)" class="air-live">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.247 7.761a6 6 0 0 1 0 8.478"></path><path d="M19.075 4.933a10 10 0 0 1 0 14.134"></path><path d="M4.925 19.067a10 10 0 0 1 0-14.134"></path><path d="M7.753 16.239a6 6 0 0 1 0-8.478"></path><circle cx="12" cy="12" r="2"></circle></svg>
-                      {{ t('airLive') }}
-                    </b>
-                  </span>
+                  </div>
+                  <div class="expand-res-h">
+                    <span class="expand-res-label">{{ t('resources') }}</span>
+                    <span v-if="panelOf(a)" class="expand-res-count">{{ panelOf(a).total }}</span>
+                  </div>
+                  <div class="expand-res">
+                    <div v-if="panelOf(a) && panelOf(a).err" class="res-empty">{{ t('noRes') }}</div>
+                    <div v-else-if="!panelOf(a) || !panelOf(a).list" class="res-loading">{{ t('loading') }}</div>
+                    <div v-else-if="!panelOf(a).list.length" class="res-empty">{{ t('noRes') }}</div>
+                    <div v-else class="res-list">
+                      <ResourceRow v-for="r in panelOf(a).list" :key="r.info_hash" :r="r" mini @open="openRes" />
+                    </div>
+                  </div>
                 </div>
-                <div class="card-title">{{ a.title }}</div>
-              </div>
+              </template>
             </div>
           </template>
         </div>
