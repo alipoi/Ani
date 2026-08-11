@@ -298,11 +298,6 @@ onBeforeUnmount(() => {
                   <div class="card-img" :style="imgPath(a, seasonKey(calYear.value, calSeason.value)) ? { '--img': 'url(' + imgPath(a, seasonKey(calYear.value, calSeason.value)) + ')' } : {}" @click="onCover(a)">
                     <template v-if="metaOf(a)">
                       <span v-if="metaOf(a).score > 0" class="card-score">{{ metaOf(a).score }}<i>{{ t('calScore') }}</i></span>
-                      <div v-if="metaOf(a).tags.length" class="card-meta-bar">
-                        <div class="card-tags">
-                          <span v-for="(tg, ti) in metaOf(a).tags" :key="ti">{{ tg }}</span>
-                        </div>
-                      </div>
                     </template>
                     <span v-if="isCurrentSeason && airTimeOf(a)" class="air-badge" :class="{ live: airLiveOf(a) }">
                       {{ airTimeOf(a) }}

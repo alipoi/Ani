@@ -660,35 +660,6 @@ html.dark .search-input {
 }
 .card-score i { font-style: normal; font-size: 9px; font-weight: 500; opacity: .85; }
 
-.card-meta-bar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  padding: 18px 6px 6px;
-  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .72));
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-}
-
-.card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-}
-.card-tags span {
-  padding: 1px 5px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, .18);
-  color: #fff;
-  font-size: 9px;
-  line-height: 1.6;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .meta-status { display: inline-flex; align-items: center; gap: 3px; }
 .meta-status::before {
   content: '';
@@ -1305,8 +1276,6 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 @media (max-width: 460px) {
   .card-list { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; padding: 12px; }
   .card-title { font-size: 11px; -webkit-line-clamp: 2; }
-  .card-tags span { font-size: 8px; padding: 0 4px; }
-  .card-tags { gap: 2px; }
   .card-score { font-size: 10px; padding: 1px 5px; }
   .air-badge { font-size: 9px; padding: 1px 5px; }
   .search-input { width: 100px; font-size: 12px; padding-left: 28px; background-size: 12px; }
