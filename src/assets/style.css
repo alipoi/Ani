@@ -1872,3 +1872,28 @@ html.dark ::-webkit-scrollbar-thumb { background: color-mix(in srgb, #ff6b9d 55%
   .gotop { bottom: calc(124px + env(safe-area-inset-bottom)); }
   .nav-tabs { display: none; }
 }
+
+/* 大屏桌面端：加宽内容区；卡片列数随视口自适应（参考 anibt 断点），封面放大 */
+@media (min-width: 1200px) {
+  .day-layout, .cal-toolbar {
+    width: min(1440px, 100% - 2 * clamp(8px, 2.5vw, 32px));
+  }
+  .day-layout > .main { width: 100%; }
+  .card-title { font-size: 13px; }
+}
+@media (min-width: 641px) {
+  .card-img { aspect-ratio: 2 / 3; }
+  .card-list { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 768px) {
+  .card-list { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 1024px) {
+  .card-list { grid-template-columns: repeat(5, 1fr); }
+}
+@media (min-width: 1280px) {
+  .card-list { grid-template-columns: repeat(6, 1fr); }
+}
+@media (min-width: 1536px) {
+  .card-list { grid-template-columns: repeat(7, 1fr); }
+}
