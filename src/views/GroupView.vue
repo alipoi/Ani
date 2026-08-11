@@ -81,7 +81,7 @@ watch(() => route.fullPath, load, { immediate: true })
       <div v-else-if="!list.length" class="empty show">{{ t('noRes') }}</div>
       <div v-else>
         <div class="res-table">
-          <div class="res-table-head"><span>{{ t('headEp') }}</span><span>{{ t('headTitle') }}</span><span>{{ t('headSize') }}</span><span>{{ t('headTime') }}</span><span>{{ t('headMagnet') }}</span></div>
+          <div class="res-table-head"><span>{{ t('headTitle') }}</span><span>{{ t('headSize') }}</span><span>{{ t('headTime') }}</span><span>{{ t('headMagnet') }}</span></div>
           <ResourceRow v-for="r in list" :key="r.info_hash" :r="r" @open="openDetail" />
         </div>
         <Pager v-if="pages > 1" :page="page" :pages="pages" @go="go" />

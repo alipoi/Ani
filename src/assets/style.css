@@ -1165,7 +1165,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 .res-table-head, .res-row {
   display: grid;
   align-items: center;
-  grid-template-columns: 44px 1fr 95px 120px 40px;
+  grid-template-columns: 1fr 95px 120px 40px;
   gap: 10px;
   padding: 10px 16px;
 }
@@ -1260,10 +1260,8 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   .res-stats { display: none; }
   .card-list { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding: 14px; }
   .res-table-head, .res-row { grid-template-columns: 1fr 80px 40px; gap: 8px; padding: 9px 12px; }
-  .res-ep { display: none; }
   .res-time { display: none; }
-.res-table-head :nth-child(1) { display: none; }
-  .res-table-head :nth-child(4) { display: none; }
+  .res-table-head :nth-child(3) { display: none; }
   .search-input { width: 130px; }
   .search-input:focus { width: 155px; }
   .detail-top { flex-direction: column; align-items: center; text-align: center; }
@@ -1315,8 +1313,8 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 .header-inner { gap: 6px; }
   .res-table-head, .res-row { grid-template-columns: 1fr 36px; gap: 6px; padding: 8px 10px; }
   .res-size { display: none; }
-  .res-table-head :nth-child(3) { display: none; }
-  .res-table-head span:nth-child(5) { justify-self: end; }
+  .res-table-head :nth-child(2), .res-table-head :nth-child(3) { display: none; }
+  .res-table-head span:nth-child(4) { justify-self: end; }
   .logo-text { font-size: 17px; }
   .logo-icon { font-size: 18px; }
   .nav-row select { font-size: 12px; padding: 5px 8px; padding-right: 20px; }
@@ -1385,17 +1383,6 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 
 .res-row:last-child { border-bottom: none; }
 .res-row:hover { background: var(--surface-hover); }
-
-.res-ep {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--primary);
-  background: rgba(232,72,90,.08);
-  padding: 2px 8px;
-  border-radius: 10px;
-  justify-self: start;
-  white-space: nowrap;
-}
 
 .res-title {
   font-size: 13px;
@@ -1645,7 +1632,7 @@ grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
 .res-list { display: flex; flex-direction: column; }
 
 .res-row.mini {
-  grid-template-columns: 44px 1fr 80px 100px 36px;
+  grid-template-columns: 1fr 80px 100px 36px;
   font-size: 12px;
   padding: 8px 12px;
   border: 1px solid var(--border-light);
