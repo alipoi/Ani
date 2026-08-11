@@ -608,6 +608,7 @@ html.dark .search-input {
 .card-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-auto-flow: dense;
   gap: 12px;
   padding: 16px 18px;
 }
