@@ -630,10 +630,10 @@ html.dark .search-input {
   width: 100%;
   aspect-ratio: 3/4;
   overflow: hidden;
-background: var(--bg);
+  background: var(--bg);
   background-image: var(--img, none);
   cursor: pointer;
-  background-size: cover;
+  background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
   border-radius: var(--radius-sm);
@@ -1853,7 +1853,6 @@ html.dark ::-webkit-scrollbar-thumb { background: color-mix(in srgb, #ff6b9d 55%
   .card-title { font-size: 13px; }
 }
 @media (min-width: 641px) {
-  .card-img { aspect-ratio: 2 / 3; }
   .card-list { grid-template-columns: repeat(3, 1fr); }
 }
 @media (min-width: 768px) {
