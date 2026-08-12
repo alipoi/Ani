@@ -31,7 +31,7 @@ export default defineConfig({
             }
           },
           {
-            urlPattern: ({ url }) => url.pathname.startsWith('/api/') || url.pathname.startsWith('/images/'),
+            urlPattern: ({ url }) => url.pathname.startsWith('/api/') || url.pathname.startsWith('/images/') || url.pathname.startsWith('/thumbs/'),
             handler: 'StaleWhileRevalidate',
             options: { cacheName: 'api-cache' }
           }

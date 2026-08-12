@@ -6,7 +6,7 @@ import { API, apiGet } from '../api'
 import { calYear, calSeason, seasonKey, currentSeasonNow } from '../calendar'
 import { searchQuery } from '../search'
 import { overlayOpen, overlayData } from '../globals'
-import { imgPath } from '../utils'
+import { thumbPath } from '../utils'
 import { loadSeasonMeta, bgMeta } from '../bgmeta'
 import ResourceRow from '../components/ResourceRow.vue'
 
@@ -163,7 +163,7 @@ function panelOf(a) {
 }
 
 function panelCoverStyle(a) {
-  const p = imgPath(a)
+  const p = thumbPath(a)
   return p ? { '--img': 'url(' + p + ')' } : {}
 }
 
@@ -295,7 +295,7 @@ onBeforeUnmount(() => {
             <div class="card-list">
               <template v-for="a in day.items" :key="a.id">
                 <div class="card" :data-id="a.id" :class="{ on: expandedId === a.id }">
-                  <div class="card-img" :style="imgPath(a, seasonKey(calYear.value, calSeason.value)) ? { '--img': 'url(' + imgPath(a, seasonKey(calYear.value, calSeason.value)) + ')' } : {}" @click="onCover(a)">
+                  <div class="card-img" :style="thumbPath(a, seasonKey(calYear.value, calSeason.value)) ? { '--img': 'url(' + thumbPath(a, seasonKey(calYear.value, calSeason.value)) + ')' } : {}" @click="onCover(a)">
                     <template v-if="metaOf(a)">
                       <span v-if="metaOf(a).score > 0" class="card-score">{{ metaOf(a).score }}<i>{{ t('calScore') }}</i></span>
                     </template>
