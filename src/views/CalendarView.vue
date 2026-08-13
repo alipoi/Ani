@@ -292,7 +292,7 @@ onBeforeUnmount(() => {
       <div v-else-if="err" class="empty show">{{ err }}</div>
       <div v-else-if="!filtered.length" class="empty show">{{ searchQuery.trim() ? t('emptyBangumi') : t('empty') }}</div>
       <div v-else id="list">
-        <div v-for="(day, i) in weekdays" :key="day.label" class="day-section" :data-wi="i">
+        <div v-for="(day, i) in weekdays" :key="day.label" class="day-section" :class="{ nodata: !day.items.length }" :data-wi="i">
           <template v-if="day.items.length">
             <div class="day-h">{{ day.label }}<span v-if="isCurrentSeason" class="day-date">{{ day.date }}<b v-if="day.isToday">（今天）</b></span></div>
             <div class="card-list">

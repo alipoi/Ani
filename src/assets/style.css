@@ -553,6 +553,9 @@ html.dark .day-nav-btn.on:hover { background: rgba(34, 197, 94, .18); color: #4a
 
 .day-section:hover { box-shadow: var(--shadow-hover); }
 
+.day-section.nodata { border: 0; background: none; box-shadow: none; margin-bottom: 0; animation: none; }
+.day-section.nodata:hover { box-shadow: none; }
+
 .day-section:nth-child(1) { animation-delay: .02s; }
 .day-section:nth-child(2) { animation-delay: .06s; }
 .day-section:nth-child(3) { animation-delay: .1s; }
@@ -1142,7 +1145,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 .res-table-head, .res-row {
   display: grid;
   align-items: center;
-  grid-template-columns: 1fr 95px 120px 40px;
+  grid-template-columns: 1fr 95px 120px 114px;
   gap: 10px;
   padding: 10px 16px;
 }
@@ -1237,7 +1240,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   /* 资源页/字幕组页统计条移动端隐藏（信息冗余） */
   .res-stats { display: none; }
   .card-list { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding: 14px; }
-  .res-table-head, .res-row { grid-template-columns: 1fr 80px 40px; gap: 8px; padding: 9px 12px; }
+  .res-table-head, .res-row { grid-template-columns: 1fr 80px 116px; gap: 8px; padding: 9px 12px; }
   .res-time { display: none; }
   .res-table-head :nth-child(3) { display: none; }
   .search-input { width: 130px; }
@@ -1288,7 +1291,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   .search-input { width: 100px; font-size: 12px; padding-left: 28px; background-size: 12px; }
   .search-input:focus { width: 120px; }
 .header-inner { gap: 6px; }
-  .res-table-head, .res-row { grid-template-columns: 1fr 36px; gap: 6px; padding: 8px 10px; }
+  .res-table-head, .res-row { grid-template-columns: 1fr 116px; gap: 6px; padding: 8px 10px; }
   .res-size { display: none; }
   .res-table-head :nth-child(2), .res-table-head :nth-child(3) { display: none; }
   .res-table-head span:nth-child(4) { justify-self: end; }
@@ -1392,6 +1395,13 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 .res-size { font-size: 12px; color: var(--text2); white-space: nowrap; }
 .res-time { font-size: 12px; color: var(--text3); white-space: nowrap; }
 
+.res-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: end;
+}
+
 .res-magnet {
   width: 34px;
   height: 34px;
@@ -1404,10 +1414,14 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   display: flex;
   align-items: center;
   justify-content: center;
-  justify-self: end;
+  text-decoration: none;
   transition: all .2s;
+  padding: 0;
 }
 .res-magnet:hover { background: var(--primary); color: #fff; transform: scale(1.08); }
+.res-magnet svg { width: 14px; height: 14px; }
+.res-copied { font-size: 13px; font-weight: 700; color: var(--primary); }
+.res-row.mini .res-actions { justify-self: end; }
 
 .ctx-menu {
   position: fixed;
@@ -1612,7 +1626,7 @@ grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
 .res-list { display: flex; flex-direction: column; }
 
 .res-row.mini {
-  grid-template-columns: 1fr 80px 100px 36px;
+  grid-template-columns: 1fr 80px 100px 114px;
   font-size: 12px;
   padding: 8px 12px;
   border: 1px solid var(--border-light);
@@ -1642,7 +1656,7 @@ grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
     display: block;
     overflow: visible;
   }
-  .res-row.mini .res-magnet {
+  .res-row.mini .res-actions {
     flex: 0 0 auto;
     margin-left: auto;
   }
