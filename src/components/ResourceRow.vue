@@ -23,7 +23,7 @@ function showCtx(e) {
     x: e.clientX, y: e.clientY,
     magnet: props.r.magnet || '',
     title: props.r.title || '',
-    torrentUrl: props.r.torrent_url || ''
+    torrentUrl: props.r.torrent_url ? '/api/resources/torrent/' + props.r.info_hash : ''
   }
 }
 </script>
@@ -58,7 +58,7 @@ function showCtx(e) {
       <a
         v-if="r.torrent_url"
         class="res-magnet"
-        :href="r.torrent_url"
+        :href="'/api/resources/torrent/' + r.info_hash"
         target="_blank"
         rel="noopener noreferrer"
         :title="t('dlTorrent')"
