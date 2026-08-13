@@ -34,7 +34,6 @@ function showCtx(e) {
       <span v-if="gt" class="res-title" :title="r.title" @click="emit('open', r)">{{ gt.before }}<a class="res-title-tag" :href="'/group/' + encodeURIComponent(gt.tag)" :title="t('titleTagView', { g: gt.tag })" @click.stop>[{{ gt.tag }}]</a>{{ gt.after }}</span>
       <span v-else class="res-title" :title="r.title" @click="emit('open', r)">{{ r.title }}</span>
       <span class="res-sub">
-        <span v-if="r.subtitle_group && !(gt && gt.tag === r.subtitle_group)" class="res-sub-group">{{ r.subtitle_group }}</span>
         <span v-if="r.size" class="res-sub-item">{{ r.size }}</span>
         <span class="res-sub-item">{{ relTime }}</span>
       </span>
