@@ -3,7 +3,6 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { API, apiGet } from '../api'
-import { esc } from '../utils'
 import ResourceRow from '../components/ResourceRow.vue'
 import Pager from '../components/Pager.vue'
 
@@ -62,18 +61,12 @@ function load() {
     })
 }
 
-const statsHtml = computed(() =>
-  '<span class="stats-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></span> ' +
-  (term.value ? t('statsSearch', { q: esc(term.value) }) : '') +
-  t('resCount', { n: total.value }))
-
 watch(() => route.fullPath, load, { immediate: true })
 </script>
 
 <template>
   <div>
     <main class="main classic-main">
-      <div class="stats-bar" v-html="statsHtml"></div>
       <div v-if="loading" class="loading"><span class="spinner"></span>{{ t('loading') }}</div>
       <div v-else-if="err" class="empty show">{{ t('loadErr') }}</div>
       <div v-else-if="!list.length" class="empty show">{{ t('noRes') }}</div>
