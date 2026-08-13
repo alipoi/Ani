@@ -1471,8 +1471,14 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
     flex: none;
   }
   .res-size, .res-time { display: none; }
-  .res-row:not(.mini) .res-actions { position: absolute; right: 12px; bottom: 10px; }
-  .res-row.mini .res-main { flex: 1 1 auto; min-width: 0; }
+  .res-actions { position: absolute; right: 12px; bottom: 10px; }
+  .res-row.mini { padding: 8px 12px; }
+  .res-row.mini .res-title {
+    -webkit-line-clamp: unset;
+    white-space: normal;
+    display: block;
+    overflow: visible;
+  }
 }
 
 .ctx-menu {
@@ -1690,28 +1696,6 @@ grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
   -webkit-line-clamp: 1;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-/* 同番资源行：移动端标题吃满宽度、磁力按钮不挤压 */
-@media (max-width: 700px) {
-  .res-row.mini {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-  }
-  .res-row.mini .res-title {
-    flex: 1 1 auto;
-    min-width: 0;
-    -webkit-line-clamp: unset;
-    white-space: normal;
-    display: block;
-    overflow: visible;
-  }
-  .res-row.mini .res-actions {
-    flex: 0 0 auto;
-    margin-left: auto;
-  }
 }
 
 .res-more {
