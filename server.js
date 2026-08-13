@@ -452,7 +452,7 @@ function buildRssFeed(channelLink, channelTitle, list) {
     '<rss version="2.0">' +
     '<channel>' +
     '<title>' + esc(channelTitle) + ' 最新动画资源</title>' +
-    '<description>' + esc('Nekomi 是动漫资源聚合站') + '</description>' +
+    '<description>' + esc('Nekomi 动漫新番') + '</description>' +
     '<link>' + esc(channelLink) + '</link>';
   list.forEach(function(r) {
     var magnet = magnetWithMyTrackers(r.magnet);
