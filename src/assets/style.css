@@ -571,31 +571,24 @@ html.dark .day-nav-btn.on:hover { background: rgba(34, 197, 94, .18); color: #4a
   border-radius: var(--radius) var(--radius) 0 0;
   box-shadow: var(--shadow);
 }
-.search-res-list {
+.search-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-auto-flow: dense;
+  gap: 12px;
+  padding: 16px 18px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-top: none;
   border-radius: 0 0 var(--radius) var(--radius);
   box-shadow: var(--shadow);
-  padding: 6px;
-  overflow: hidden;
 }
-.search-res-item {
+.s-card-meta {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 10px;
-  padding: 9px 12px;
-  border-radius: 8px;
-  color: var(--text);
-  text-decoration: none;
-  cursor: pointer;
-  transition: background .15s;
+  gap: 8px;
+  padding: 0 12px 10px;
 }
-.search-res-item:hover { background: var(--surface-hover); }
-.sri-title { font-size: 13px; font-weight: 600; color: var(--text); min-width: 0; }
-.search-res-item:hover .sri-title { color: var(--primary); }
-.sri-jp { font-size: 12px; color: var(--text3); }
 .sri-season {
   margin-left: auto;
   font-size: 11px;
@@ -606,7 +599,7 @@ html.dark .day-nav-btn.on:hover { background: rgba(34, 197, 94, .18); color: #4a
   padding: 2px 8px;
   flex: none;
 }
-.sri-day { font-size: 12px; color: var(--text2); flex: none; }
+.sri-day { font-size: 12px; color: var(--text2); flex: none; white-space: nowrap; }
 .sri-day em { font-style: normal; color: var(--text3); margin-left: 4px; }
 .search-empty { padding: 14px 18px; }
 
@@ -1293,7 +1286,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 @media (max-width: 700px) {
   /* 资源页/字幕组页统计条移动端隐藏（信息冗余） */
   .res-stats { display: none; }
-  .card-list { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding: 14px; }
+  .card-list, .search-cards { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding: 14px; }
   .res-table-head, .res-row { grid-template-columns: 1fr 80px 116px; gap: 8px; padding: 9px 12px; }
   .res-time { display: none; }
   .res-table-head :nth-child(3) { display: none; }
@@ -1337,7 +1330,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 }
 
 @media (max-width: 460px) {
-  .card-list { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; padding: 12px; }
+  .card-list, .search-cards { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; padding: 12px; }
 .card-title { min-height: 44px; padding: 8px 10px; }
 .card-title span { font-size: 11px; }
   .card-score { font-size: 10px; padding: 1px 5px; }

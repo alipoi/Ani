@@ -7,7 +7,7 @@ import { calYear, calSeason, seasonKey, currentSeasonNow } from '../calendar'
 import { searchQuery } from '../search'
 import { overlayOpen, overlayData } from '../globals'
 import { thumbPath } from '../utils'
-import { loadSeasonMeta, bgMeta } from '../bgmeta'
+import { loadSeasonMeta, bgMeta, loadMetaFor } from '../bgmeta'
 import ResourceRow from '../components/ResourceRow.vue'
 
 const { t, tm } = useI18n()
@@ -72,7 +72,11 @@ watch(term, (q) => {
   if (!q) { searchList.value = null; searchLoading.value = false; return }
   searchLoading.value = true
   apiGet(API.search(q))
-    .then((d) => { searchList.value = (d && d.bangumi) || [] })
+    .then((d) => {
+      const list = ((d && d.bangumi) || []).map((x) => Object.assign({}, x, { seasonKey: x.season_key }))
+      searchList.value = list
+      if (list.length) warmMeta(list)
+    })
     .catch(() => { searchList.value = [] })
     .finally(() => { searchLoading.value = false })
 }, { immediate: true })
@@ -82,9 +86,23 @@ function fmtSeason(key) {
   if (!key || key.length < 6) return ''
   return key.slice(0, 4) + t('yearSep') + t('season.' + (SEASON_MM[key.slice(4, 6)] || 'fall'))
 }
-function goSeasonSearch(m) {
-  if (!m.season_key) return
-  router.push('/' + m.season_key + '/')
+function scoreOf(m) {
+  const meta = bgMeta.get(m.seasonKey + ':' + m.id)
+  return meta && meta.score > 0 ? meta.score : 0
+}
+
+function openSearchCard(m) {
+  overlayData.value = { a: m, seasonKey: m.seasonKey }
+  overlayOpen.value = true
+}
+
+function warmMeta(list) {
+  let i = 0
+  const timer = setInterval(() => {
+    if (i >= list.length) { clearInterval(timer); return }
+    const m = list[i++]
+    if (!bgMeta.has(m.seasonKey + ':' + m.id)) loadMetaFor(m, m.seasonKey)
+  }, 200)
 }
 
 const weekdays = computed(() => {
@@ -321,13 +339,17 @@ onBeforeUnmount(() => {
           </div>
           <div v-if="searchLoading" class="loading"><span class="spinner"></span>{{ t('loading') }}</div>
           <div v-else-if="searchList && !searchList.length" class="empty show search-empty">{{ t('emptyBangumi') }}</div>
-          <div v-else-if="searchList" class="search-res-list">
-            <a v-for="m in searchList" :key="m.season_key + ':' + m.id" class="search-res-item" @click="goSeasonSearch(m)">
-              <span class="sri-title" :title="m.title">{{ m.title }}</span>
-              <span v-if="m.titleJp" class="sri-jp">{{ m.titleJp }}</span>
-              <span class="sri-season">{{ fmtSeason(m.season_key) }}</span>
-              <span v-if="m.weekday" class="sri-day">{{ m.weekday }}<em v-if="m.airTime">{{ m.airTime }}</em></span>
-            </a>
+          <div v-else-if="searchList" class="search-cards">
+            <div v-for="m in searchList" :key="m.seasonKey + ':' + m.id" class="card">
+              <div class="card-img" :style="thumbPath(m) ? { '--img': 'url(' + thumbPath(m) + ')' } : {}" @click="openSearchCard(m)">
+                <span v-if="scoreOf(m)" class="card-score">{{ scoreOf(m) }}<i>{{ t('calScore') }}</i></span>
+              </div>
+              <div class="card-title" @click="openSearchCard(m)"><span>{{ m.title }}</span></div>
+              <div class="s-card-meta">
+                <span class="sri-season">{{ fmtSeason(m.season_key) }}</span>
+                <span v-if="m.airTime" class="sri-day"><em>{{ m.airTime }}</em></span><span v-else-if="m.weekday" class="sri-day">{{ m.weekday }}</span>
+              </div>
+            </div>
           </div>
         </div>
         <div v-for="(day, i) in weekdays" :key="day.label" class="day-section" :class="{ nodata: !day.items.length }" :data-wi="i">
