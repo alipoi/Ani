@@ -1016,8 +1016,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   color: var(--text2);
 }
 
-.detail-score { color: var(--primary); font-weight: 700; }
-.detail-score i { font-style: normal; font-weight: 500; font-size: 11px; }
+.detail-score i { font-style: normal; }
 
 .detail-tags {
   display: flex;
