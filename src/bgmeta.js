@@ -237,6 +237,17 @@ export async function loadMetaFor(a, sk) {
   return p
 }
 
+export function searchMeta(x) {
+  return computeMeta({
+    date: x.date || '',
+    total_episodes: x.eps || 0,
+    platform: x.platform || '',
+    rating: x.score ? { score: x.score } : null,
+    meta_tags: null,
+    tags: (x.tags || []).map((t) => ({ name: t, count: 0 }))
+  })
+}
+
 export function loadSeasonMeta(items, sk) {
   const queue = items.slice()
   let cursor = 0

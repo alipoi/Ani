@@ -7,7 +7,7 @@ import { calYear, calSeason, seasonKey, currentSeasonNow } from '../calendar'
 import { searchQuery } from '../search'
 import { overlayOpen, overlayData } from '../globals'
 import { thumbPath } from '../utils'
-import { loadSeasonMeta, bgMeta, loadMetaFor } from '../bgmeta'
+import { loadSeasonMeta, bgMeta, searchMeta } from '../bgmeta'
 import ResourceRow from '../components/ResourceRow.vue'
 
 const { t, tm } = useI18n()
@@ -71,20 +71,41 @@ const searchLoading = ref(false)
 watch(term, (q) => {
   if (!q) { searchList.value = null; searchLoading.value = false; return }
   searchLoading.value = true
-  apiGet(API.search(q))
+  apiGet(API.anime(q))
     .then((d) => {
-      const list = ((d && d.bangumi) || []).map((x) => Object.assign({}, x, { seasonKey: x.season_key }))
+      const list = ((d && d.list) || []).map((x) => {
+        const sk = skFromDate(x.date)
+        bgMeta.set(sk + ':' + x.id, searchMeta(x))
+        return Object.assign({}, x, { seasonKey: sk, coverImage: x.cover })
+      })
       searchList.value = list
-      if (list.length) warmMeta(list)
     })
     .catch(() => { searchList.value = [] })
     .finally(() => { searchLoading.value = false })
 }, { immediate: true })
 
 const SEASON_MM = { '01': 'winter', '02': 'winter', '03': 'winter', '04': 'spring', '05': 'spring', '06': 'spring', '07': 'summer', '08': 'summer', '09': 'summer', '10': 'fall', '11': 'fall', '12': 'fall' }
-function fmtSeason(key) {
-  if (!key || key.length < 6) return ''
-  return key.slice(0, 4) + t('yearSep') + t('season.' + (SEASON_MM[key.slice(4, 6)] || 'fall'))
+const SK_MONTH = { winter: '01', spring: '04', summer: '07', fall: '10' }
+function skFromDate(dateStr) {
+  const m = /^(\d{4})-(\d{2})/.exec(dateStr || '')
+  if (!m) return ''
+  const mm = +m[2]
+  const sn = mm <= 3 ? 'winter' : mm <= 6 ? 'spring' : mm <= 9 ? 'summer' : 'fall'
+  return m[1] + SK_MONTH[sn]
+}
+function fmtSeasonDate(dateStr) {
+  const m = /^(\d{4})-(\d{2})/.exec(dateStr || '')
+  if (!m) return ''
+  return m[1] + t('yearSep') + t('season.' + (SEASON_MM[m[2]] || 'fall'))
+}
+function weekdayOf(m) {
+  const wd = +m.weekday
+  if (!(wd >= 1 && wd <= 7)) return ''
+  return tm('days')[wd - 1]
+}
+function searchCover(m) {
+  const img = m.cover || thumbPath(m)
+  return img ? { '--img': 'url(' + img + ')' } : {}
 }
 function scoreOf(m) {
   const meta = bgMeta.get(m.seasonKey + ':' + m.id)
@@ -94,15 +115,6 @@ function scoreOf(m) {
 function openSearchCard(m) {
   overlayData.value = { a: m, seasonKey: m.seasonKey }
   overlayOpen.value = true
-}
-
-function warmMeta(list) {
-  let i = 0
-  const timer = setInterval(() => {
-    if (i >= list.length) { clearInterval(timer); return }
-    const m = list[i++]
-    if (!bgMeta.has(m.seasonKey + ':' + m.id)) loadMetaFor(m, m.seasonKey)
-  }, 200)
 }
 
 const weekdays = computed(() => {
@@ -340,14 +352,14 @@ onBeforeUnmount(() => {
           <div v-if="searchLoading" class="loading"><span class="spinner"></span>{{ t('loading') }}</div>
           <div v-else-if="searchList && !searchList.length" class="empty show search-empty">{{ t('emptyBangumi') }}</div>
           <div v-else-if="searchList" class="search-cards">
-            <div v-for="m in searchList" :key="m.seasonKey + ':' + m.id" class="card">
-              <div class="card-img" :style="thumbPath(m) ? { '--img': 'url(' + thumbPath(m) + ')' } : {}" @click="openSearchCard(m)">
+            <div v-for="m in searchList" :key="m.id" class="card">
+              <div class="card-img" :style="searchCover(m)" @click="openSearchCard(m)">
                 <span v-if="scoreOf(m)" class="card-score">{{ scoreOf(m) }}<i>{{ t('calScore') }}</i></span>
               </div>
               <div class="card-title" @click="openSearchCard(m)"><span>{{ m.title }}</span></div>
               <div class="s-card-meta">
-                <span class="sri-season">{{ fmtSeason(m.season_key) }}</span>
-                <span v-if="m.airTime" class="sri-day"><em>{{ m.airTime }}</em></span><span v-else-if="m.weekday" class="sri-day">{{ m.weekday }}</span>
+                <span v-if="m.date" class="sri-season">{{ fmtSeasonDate(m.date) }}</span>
+                <span v-if="weekdayOf(m)" class="sri-day">{{ weekdayOf(m) }}</span>
               </div>
             </div>
           </div>
