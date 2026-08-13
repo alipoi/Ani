@@ -340,7 +340,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
     <div class="day-layout">
-        <nav class="day-nav" aria-label="weekly day navigation">
+        <nav class="day-nav" aria-label="weekly day navigation" v-if="!term">
           <button v-for="d in navDays" :key="d.wi" type="button" class="day-nav-btn" :class="{ on: activeDay === d.wi }" :aria-current="activeDay === d.wi ? 'true' : undefined" @click="scrollToDay(d.wi)">
             <span class="day-nav-dot" aria-hidden="true"></span>
             <span class="day-nav-name">{{ d.label }}</span>
@@ -357,7 +357,7 @@ onBeforeUnmount(() => {
           </div>
           <div v-if="searchLoading" class="loading"><span class="spinner"></span>{{ t('loading') }}</div>
           <div v-else-if="searchList && !searchList.length" class="empty show search-empty">{{ t('emptyBangumi') }}</div>
-          <div v-else-if="searchList" class="search-cards">
+          <div v-else-if="searchList" class="card-list">
             <div v-for="m in searchList" :key="m.id" class="card">
               <div class="card-img" :style="searchCover(m)" @click="openSearchCard(m)">
                 <span v-if="scoreOf(m)" class="card-score">{{ scoreOf(m) }}<i>{{ t('calScore') }}</i></span>
@@ -370,7 +370,7 @@ onBeforeUnmount(() => {
             </div>
           </div>
         </div>
-        <div v-for="(day, i) in weekdays" :key="day.label" class="day-section" :class="{ nodata: !day.items.length }" :data-wi="i">
+        <div v-for="(day, i) in weekdays" v-if="!term" :key="day.label" class="day-section" :class="{ nodata: !day.items.length }" :data-wi="i">
           <template v-if="day.items.length">
             <div class="day-h">{{ day.label }}<span v-if="isCurrentSeason" class="day-date">{{ day.date }}<b v-if="day.isToday">（今天）</b></span></div>
             <div class="card-list">
