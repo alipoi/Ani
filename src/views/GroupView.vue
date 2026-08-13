@@ -3,7 +3,6 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { API, apiGet } from '../api'
-import { esc } from '../utils'
 import ResourceRow from '../components/ResourceRow.vue'
 import Pager from '../components/Pager.vue'
 
@@ -24,12 +23,6 @@ const page = computed(() => {
   return p > 0 ? p : 1
 })
 const pages = computed(() => Math.ceil(total.value / size))
-
-const statsHtml = computed(() =>
-  '<span class="stats-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"></path><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"></circle></svg></span> ' + esc(gname.value) +
-  (term.value ? t('statsSearch', { q: esc(term.value) }) : '') +
-  t('statsCount', { n: total.value }) +
-  t('statsSubscribe', { u: '/rss/group/' + encodeURIComponent(gname.value) }))
 
 function go(p) {
   const query = { ...route.query }
@@ -74,8 +67,18 @@ watch(() => route.fullPath, load, { immediate: true })
 
 <template>
   <div>
-    <div class="stats-bar" v-html="statsHtml"></div>
     <main class="main">
+      <div class="group-head">
+        <div class="group-head-info">
+          <h1 class="group-head-title">{{ gname }}</h1>
+          <span v-if="term" class="group-head-term">「{{ term }}」</span>
+          <div class="group-head-count" v-if="total" v-html="t('statsCount', { n: total })"></div>
+        </div>
+        <a class="btn-secondary group-head-rss" :href="'/rss/group/' + encodeURIComponent(gname)" target="_blank" :aria-label="t('rssSubscribe')" :title="t('rssSubscribe')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg>
+          <span>{{ t('rssSubscribe') }}</span>
+        </a>
+      </div>
       <div v-if="loading" class="loading"><span class="spinner"></span>{{ t('loading') }}</div>
       <div v-else-if="err" class="empty show">{{ t('loadErr') }}</div>
       <div v-else-if="!list.length" class="empty show">{{ t('noRes') }}</div>
