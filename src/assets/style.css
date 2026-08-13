@@ -443,9 +443,6 @@ html.dark .day-nav-btn.on:hover { background: rgba(34, 197, 94, .18); color: #4a
   flex-wrap: wrap;
   min-width: 0;
 }
-.group-head .group-name {
-  color: var(--text2);
-}
 .group-head-term {
   font-size: 13px;
   font-weight: 600;
@@ -1650,7 +1647,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 .group-name {
   font-size: 14px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--text2);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
