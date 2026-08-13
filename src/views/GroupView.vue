@@ -70,7 +70,7 @@ watch(() => route.fullPath, load, { immediate: true })
     <main class="main">
       <div class="group-head">
         <div class="group-head-info">
-          <h1 class="group-head-title">{{ gname }}</h1>
+          <div class="group-name" :title="gname">{{ gname }}</div>
           <span v-if="term" class="group-head-term">「{{ term }}」</span>
           <div class="group-head-count" v-if="total" v-html="t('statsCount', { n: total })"></div>
         </div>

@@ -443,12 +443,6 @@ html.dark .day-nav-btn.on:hover { background: rgba(34, 197, 94, .18); color: #4a
   flex-wrap: wrap;
   min-width: 0;
 }
-.group-head-title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--text);
-}
 .group-head-term {
   font-size: 13px;
   font-weight: 600;
