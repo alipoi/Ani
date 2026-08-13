@@ -68,8 +68,13 @@ const term = computed(() => searchQuery.value.trim())
 watch(() => (route.query.q || '').toString(), (q) => { if (q !== searchQuery.value) searchQuery.value = q }, { immediate: true })
 const searchList = ref(null)
 const searchLoading = ref(false)
+const searchTotal = ref(0)
+const searchCount = computed(() => {
+  const n = searchList.value ? searchList.value.length : 0
+  return searchTotal.value > n ? searchTotal.value + '+' : (searchTotal.value || n)
+})
 watch(term, (q) => {
-  if (!q) { searchList.value = null; searchLoading.value = false; return }
+  if (!q) { searchList.value = null; searchLoading.value = false; searchTotal.value = 0; return }
   searchLoading.value = true
   apiGet(API.anime(q))
     .then((d) => {
@@ -78,6 +83,7 @@ watch(term, (q) => {
         bgMeta.set(sk + ':' + x.id, searchMeta(x))
         return Object.assign({}, x, { seasonKey: sk, coverImage: x.cover })
       })
+      searchTotal.value = (d && d.total) || 0
       searchList.value = list
     })
     .catch(() => { searchList.value = [] })
@@ -347,7 +353,7 @@ onBeforeUnmount(() => {
       <div v-else id="list">
         <div v-if="term" class="search-block">
           <div class="search-block-h">
-            {{ t('statsSearch', { q: term }) }}<span v-if="searchList && searchList.length" v-html="t('resCount', { n: searchList.length })"></span>
+            {{ t('statsSearch', { q: term }) }}<span v-if="searchList && searchList.length" v-html="t('resCount', { n: searchCount })"></span>
           </div>
           <div v-if="searchLoading" class="loading"><span class="spinner"></span>{{ t('loading') }}</div>
           <div v-else-if="searchList && !searchList.length" class="empty show search-empty">{{ t('emptyBangumi') }}</div>
