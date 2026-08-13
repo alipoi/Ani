@@ -1768,7 +1768,7 @@ grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
 .res-desc a { color: var(--primary); text-decoration: none; word-break: break-all; }
 .res-desc a:hover { text-decoration: underline; }
 
-.res-page { width: min(960px, 100% - clamp(16px, 3vw, 40px)); margin: 0 auto; padding: 16px 0 56px; }
+.res-page { width: min(1100px, 100% - 2 * clamp(8px, 2.5vw, 32px)); margin: 0 auto; padding: 16px 0 56px; }
 .res-page-head { display: flex; align-items: center; margin-bottom: 14px; }
 .res-page-back { padding: 6px 16px; }
 .res-layout {
@@ -1854,13 +1854,14 @@ html.dark ::-webkit-scrollbar-thumb { background: color-mix(in srgb, #ff6b9d 55%
 @media (min-width: 1200px) {
   .header { padding: 0; }
   .header-inner,
-  .day-layout, .cal-toolbar {
+  .day-layout, .cal-toolbar, .res-page {
     width: min(1280px, 100% - 2 * clamp(8px, 2.5vw, 32px));
   }
   .day-layout, .header-inner { --pad: max(8px, calc(88px - 50% + min(640px, 50% - clamp(8px, 2.5vw, 32px)))); }
   .header-inner { padding: 12px var(--pad); }
   .day-layout { padding: 0 var(--pad); }
   .day-layout > .main { width: 100%; }
+  .res-page { --pad: max(8px, calc(88px - 50% + min(640px, 50% - clamp(8px, 2.5vw, 32px)))); padding: 16px var(--pad) 56px; }
   .card-title span { font-size: 13px; }
   .day-nav {
     position: fixed;
@@ -1873,11 +1874,12 @@ html.dark ::-webkit-scrollbar-thumb { background: color-mix(in srgb, #ff6b9d 55%
 }
 @media (min-width: 1536px) {
   .header-inner,
-  .day-layout, .cal-toolbar {
+  .day-layout, .cal-toolbar, .res-page {
     width: min(1536px, 100% - 2 * clamp(8px, 2.5vw, 32px));
   }
   .day-layout, .header-inner { --pad: max(8px, calc(88px - 50% + min(768px, 50% - clamp(8px, 2.5vw, 32px)))); }
   .day-nav { left: max(8px, calc(50% - min(768px, 50% - clamp(8px, 2.5vw, 32px)) - 115px)); }
+  .res-page { --pad: max(8px, calc(88px - 50% + min(768px, 50% - clamp(8px, 2.5vw, 32px)))); }
 }
 @media (min-width: 641px) {
   .card-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
