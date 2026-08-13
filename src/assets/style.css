@@ -1438,19 +1438,24 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 .res-main { display: contents; }
 .res-sub { display: none; }
 
-/* 移动端资源行：anibt 风格（标题 + 组别·大小·时间副行），不显示图片 */
+/* 移动端资源行：anibt 风格（标题吃满宽度，组别·大小·时间副行，图标贴右下角，不显示图片） */
 @media (max-width: 700px) {
-  .res-table-head, .res-row { grid-template-columns: 1fr auto; gap: 10px; padding: 10px 12px; }
-  .res-row { align-items: start; }
-  .res-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-  .res-title { align-self: start; }
+  .res-table-head { grid-template-columns: 1fr auto; gap: 10px; padding: 10px 12px; }
+  .res-table-head :nth-child(2), .res-table-head :nth-child(3) { display: none; }
+  .res-table-head span:nth-child(4) { justify-self: end; }
+
+  .res-row { display: block; position: relative; padding: 10px 12px; }
+  .res-main { display: block; min-width: 0; }
   .res-sub {
     display: flex;
     align-items: center;
     gap: 6px;
     min-width: 0;
-    overflow: hidden;
+    min-height: 34px;
+    margin-top: 4px;
+    padding-right: 108px;
     white-space: nowrap;
+    overflow: hidden;
   }
   .res-sub-group {
     color: var(--primary);
@@ -1466,8 +1471,8 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
     flex: none;
   }
   .res-size, .res-time { display: none; }
-  .res-table-head :nth-child(2), .res-table-head :nth-child(3) { display: none; }
-  .res-table-head span:nth-child(4), .res-actions { justify-self: end; }
+  .res-row:not(.mini) .res-actions { position: absolute; right: 12px; bottom: 10px; }
+  .res-row.mini .res-main { flex: 1 1 auto; min-width: 0; }
 }
 
 .ctx-menu {
