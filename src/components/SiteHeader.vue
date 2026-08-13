@@ -28,7 +28,8 @@ function onSearchInput() {
   searchTimer = setTimeout(() => {
     const q = searchValue.value.trim()
     searchQuery.value = q
-    router.push(q ? { path: '/classic', query: { q } } : '/classic')
+    const base = route.path
+    router.replace(q ? base + '?q=' + encodeURIComponent(q) : base)
   }, 250)
 }
 

@@ -64,6 +64,29 @@ const filtered = computed(() => {
     (a.content && a.content.toLowerCase().indexOf(term) >= 0))
 })
 
+const term = computed(() => searchQuery.value.trim())
+watch(() => (route.query.q || '').toString(), (q) => { if (q !== searchQuery.value) searchQuery.value = q }, { immediate: true })
+const searchList = ref(null)
+const searchLoading = ref(false)
+watch(term, (q) => {
+  if (!q) { searchList.value = null; searchLoading.value = false; return }
+  searchLoading.value = true
+  apiGet(API.search(q))
+    .then((d) => { searchList.value = (d && d.bangumi) || [] })
+    .catch(() => { searchList.value = [] })
+    .finally(() => { searchLoading.value = false })
+}, { immediate: true })
+
+const SEASON_MM = { '01': 'winter', '02': 'winter', '03': 'winter', '04': 'spring', '05': 'spring', '06': 'spring', '07': 'summer', '08': 'summer', '09': 'summer', '10': 'fall', '11': 'fall', '12': 'fall' }
+function fmtSeason(key) {
+  if (!key || key.length < 6) return ''
+  return key.slice(0, 4) + t('yearSep') + t('season.' + (SEASON_MM[key.slice(4, 6)] || 'fall'))
+}
+function goSeasonSearch(m) {
+  if (!m.season_key) return
+  router.push('/' + m.season_key + '/')
+}
+
 const weekdays = computed(() => {
   const out = []
   for (let i = 0; i < 7; i++) out.push({ label: tm('days')[i], items: [], date: dayInfo[i].date, isToday: dayInfo[i].isToday })
@@ -290,8 +313,23 @@ onBeforeUnmount(() => {
         <main class="main" id="listWrap">
       <div v-if="loading" class="loading"><span class="spinner"></span>{{ t('loading') }}</div>
       <div v-else-if="err" class="empty show">{{ err }}</div>
-      <div v-else-if="!filtered.length" class="empty show">{{ searchQuery.trim() ? t('emptyBangumi') : t('empty') }}</div>
+      <div v-else-if="!searchQuery.trim() && !filtered.length" class="empty show">{{ t('empty') }}</div>
       <div v-else id="list">
+        <div v-if="term" class="search-block">
+          <div class="search-block-h">
+            {{ t('statsSearch', { q: term }) }}<span v-if="searchList && searchList.length" v-html="t('resCount', { n: searchList.length })"></span>
+          </div>
+          <div v-if="searchLoading" class="loading"><span class="spinner"></span>{{ t('loading') }}</div>
+          <div v-else-if="searchList && !searchList.length" class="empty show search-empty">{{ t('emptyBangumi') }}</div>
+          <div v-else-if="searchList" class="search-res-list">
+            <a v-for="m in searchList" :key="m.season_key + ':' + m.id" class="search-res-item" @click="goSeasonSearch(m)">
+              <span class="sri-title" :title="m.title">{{ m.title }}</span>
+              <span v-if="m.titleJp" class="sri-jp">{{ m.titleJp }}</span>
+              <span class="sri-season">{{ fmtSeason(m.season_key) }}</span>
+              <span v-if="m.weekday" class="sri-day">{{ m.weekday }}<em v-if="m.airTime">{{ m.airTime }}</em></span>
+            </a>
+          </div>
+        </div>
         <div v-for="(day, i) in weekdays" :key="day.label" class="day-section" :class="{ nodata: !day.items.length }" :data-wi="i">
           <template v-if="day.items.length">
             <div class="day-h">{{ day.label }}<span v-if="isCurrentSeason" class="day-date">{{ day.date }}<b v-if="day.isToday">（今天）</b></span></div>
