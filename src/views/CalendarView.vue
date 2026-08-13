@@ -166,6 +166,15 @@ const isCurrentSeason = computed(() => {
   return seasonKey(calYear.value, calSeason.value) === seasonKey(now.y, now.s)
 })
 
+function scrollNavTo(wi) {
+  const nav = document.querySelector('.day-nav')
+  if (!nav || window.matchMedia('(min-width: 641px)').matches) return
+  const btn = nav.querySelector('.day-nav-btn[data-wi="' + wi + '"]')
+  if (!btn) return
+  const c = btn.offsetLeft - (nav.clientWidth - btn.clientWidth) / 2
+  nav.scrollTo({ left: Math.max(0, c), behavior: 'smooth' })
+}
+
 function scrollToDay(wi) {
   activeDay.value = wi
   document.activeElement && document.activeElement.blur()
@@ -175,6 +184,7 @@ function scrollToDay(wi) {
     if (s.dataset.wi === String(wi)) {
       s.classList.add('current')
       s.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      scrollNavTo(wi)
       return
     }
   }
@@ -289,6 +299,7 @@ function scrollToToday() {
     if (s.dataset.wi === String(todayWi)) {
       s.classList.add('current')
       setTimeout((el) => { el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, 100, s)
+      scrollNavTo(todayWi)
       return
     }
   }
@@ -341,7 +352,7 @@ onBeforeUnmount(() => {
     </div>
     <div class="day-layout">
         <nav class="day-nav" aria-label="weekly day navigation" v-if="!term">
-          <button v-for="d in navDays" :key="d.wi" type="button" class="day-nav-btn" :class="{ on: activeDay === d.wi }" :aria-current="activeDay === d.wi ? 'true' : undefined" @click="scrollToDay(d.wi)">
+          <button v-for="d in navDays" :key="d.wi" type="button" class="day-nav-btn" :data-wi="d.wi" :class="{ on: activeDay === d.wi }" :aria-current="activeDay === d.wi ? 'true' : undefined" @click="scrollToDay(d.wi)">
             <span class="day-nav-dot" aria-hidden="true"></span>
             <span class="day-nav-name">{{ d.label }}</span>
           </button>
