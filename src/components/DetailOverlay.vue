@@ -98,7 +98,7 @@ watch(overlayOpen, (open) => {
             <div v-if="overlayData.a.titleJp" class="detail-title-jp">{{ overlayData.a.titleJp }}</div>
             <div v-if="meta" class="detail-meta">
               <div class="detail-meta-line">
-                <span v-if="meta.score > 0" class="detail-score">{{ meta.score }}<i>{{ t('calScore') }}</i></span>
+                <span v-if="meta.score > 0" class="detail-score">{{ meta.score }}</span>
                 <span v-if="fmtPlatform(meta.platform)" class="detail-fmt">{{ fmtPlatform(meta.platform) }}</span>
                 <span v-if="meta.status" class="meta-status" :class="meta.status">{{ fmtStatus(meta.status) }}</span>
                 <span v-if="meta.quarter" class="detail-qt">{{ fmtQuarter(meta.quarter) }}</span>

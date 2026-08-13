@@ -360,7 +360,7 @@ onBeforeUnmount(() => {
           <div v-else-if="searchList" class="card-list">
             <div v-for="m in searchList" :key="m.id" class="card">
               <div class="card-img" :style="searchCover(m)" @click="openSearchCard(m)">
-                <span v-if="scoreOf(m)" class="card-score">{{ scoreOf(m) }}<i>{{ t('calScore') }}</i></span>
+                <span v-if="scoreOf(m)" class="card-score">{{ scoreOf(m) }}</span>
                 <span v-if="m.date" class="air-badge">{{ fmtSeasonDate(m.date) }}</span>
               </div>
               <div class="card-title" @click="openSearchCard(m)"><span>{{ m.title }}</span></div>
@@ -376,7 +376,7 @@ onBeforeUnmount(() => {
                 <div class="card" :data-id="a.id" :class="{ on: expandedId === a.id }">
                   <div class="card-img" :style="thumbPath(a, seasonKey(calYear.value, calSeason.value)) ? { '--img': 'url(' + thumbPath(a, seasonKey(calYear.value, calSeason.value)) + ')' } : {}" @click="onCover(a)">
                     <template v-if="metaOf(a)">
-                      <span v-if="metaOf(a).score > 0" class="card-score">{{ metaOf(a).score }}<i>{{ t('calScore') }}</i></span>
+                      <span v-if="metaOf(a).score > 0" class="card-score">{{ metaOf(a).score }}</span>
                     </template>
                     <span v-if="isCurrentSeason && airTimeOf(a)" class="air-badge" :class="{ live: airLiveOf(a) }">
                       {{ airTimeOf(a) }}
