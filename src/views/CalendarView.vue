@@ -104,11 +104,6 @@ function fmtSeasonDate(dateStr) {
   if (!m) return ''
   return m[1] + t('yearSep') + t('season.' + (SEASON_MM[m[2]] || 'fall'))
 }
-function weekdayOf(m) {
-  const wd = +m.weekday
-  if (!(wd >= 1 && wd <= 7)) return ''
-  return tm('days')[wd - 1]
-}
 function searchCover(m) {
   const img = m.cover || thumbPath(m)
   return img ? { '--img': 'url(' + img + ')' } : {}
@@ -361,12 +356,9 @@ onBeforeUnmount(() => {
             <div v-for="m in searchList" :key="m.id" class="card">
               <div class="card-img" :style="searchCover(m)" @click="openSearchCard(m)">
                 <span v-if="scoreOf(m)" class="card-score">{{ scoreOf(m) }}<i>{{ t('calScore') }}</i></span>
+                <span v-if="m.date" class="air-badge">{{ fmtSeasonDate(m.date) }}</span>
               </div>
               <div class="card-title" @click="openSearchCard(m)"><span>{{ m.title }}</span></div>
-              <div class="s-card-meta">
-                <span v-if="m.date" class="sri-season">{{ fmtSeasonDate(m.date) }}</span>
-                <span v-if="weekdayOf(m)" class="sri-day">{{ weekdayOf(m) }}</span>
-              </div>
             </div>
           </div>
         </div>

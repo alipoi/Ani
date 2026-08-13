@@ -583,24 +583,6 @@ html.dark .day-nav-btn.on:hover { background: rgba(34, 197, 94, .18); color: #4a
   border-radius: 0 0 var(--radius) var(--radius);
   box-shadow: var(--shadow);
 }
-.s-card-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 12px 10px;
-}
-.sri-season {
-  margin-left: auto;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 12%, transparent);
-  border-radius: 6px;
-  padding: 2px 8px;
-  flex: none;
-}
-.sri-day { font-size: 12px; color: var(--text2); flex: none; white-space: nowrap; }
-.sri-day em { font-style: normal; color: var(--text3); margin-left: 4px; }
 .search-empty { padding: 14px 18px; }
 
 .day-section:nth-child(1) { animation-delay: .02s; }
