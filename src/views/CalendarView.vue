@@ -109,6 +109,8 @@ const isCurrentSeason = computed(() => {
 
 function scrollToDay(wi) {
   activeDay.value = wi
+  document.activeElement && document.activeElement.blur()
+  document.querySelectorAll('.day-section.current').forEach(s => s.classList.remove('current'))
   const sections = document.querySelectorAll('.day-section')
   for (const s of sections) {
     if (s.dataset.wi === String(wi)) {
@@ -222,6 +224,7 @@ function scrollToToday() {
   if (searchQuery.value.trim()) return
   if (!isCurrentSeason.value) { activeDay.value = 0; return }
   activeDay.value = todayWi
+  document.querySelectorAll('.day-section.current').forEach(s => s.classList.remove('current'))
   const sections = document.querySelectorAll('.day-section')
   for (const s of sections) {
     if (s.dataset.wi === String(todayWi)) {
@@ -307,7 +310,7 @@ onBeforeUnmount(() => {
                       </b>
                     </span>
                   </div>
-                  <div class="card-title" @click="openDetail(a)">{{ a.title }}</div>
+                  <div class="card-title" @click="openDetail(a)"><span>{{ a.title }}</span></div>
                 </div>
                 <div v-if="expandedId === a.id" class="expand-panel" data-testid="anime-expansion-panel">
                   <button class="expand-close" :aria-label="t('collapse')" :title="t('collapse')" @click="expandedId = null">✕</button>

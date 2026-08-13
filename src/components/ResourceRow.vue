@@ -29,9 +29,9 @@ function showCtx(e) {
 </script>
 
 <template>
-  <div class="res-row" :class="{ mini }" :data-hash="r.info_hash" @click="emit('open', r)">
-    <span v-if="gt" class="res-title" :title="r.title">{{ gt.before }}<a class="res-title-tag" :href="'/group/' + encodeURIComponent(gt.tag)" :title="t('titleTagView', { g: gt.tag })" @click.stop>[{{ gt.tag }}]</a>{{ gt.after }}</span>
-    <span v-else class="res-title" :title="r.title">{{ r.title }}</span>
+  <div class="res-row" :class="{ mini }" :data-hash="r.info_hash">
+    <span v-if="gt" class="res-title" :title="r.title" @click="emit('open', r)">{{ gt.before }}<a class="res-title-tag" :href="'/group/' + encodeURIComponent(gt.tag)" :title="t('titleTagView', { g: gt.tag })" @click.stop>[{{ gt.tag }}]</a>{{ gt.after }}</span>
+    <span v-else class="res-title" :title="r.title" @click="emit('open', r)">{{ r.title }}</span>
     <span class="res-size">{{ r.size || '' }}</span>
     <span class="res-time" :title="fmtTime(r.publish_time)">{{ relTime }}</span>
     <button

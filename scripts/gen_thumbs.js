@@ -3,8 +3,8 @@ const path = require('path');
 const sharp = require('/opt/ani/node_modules/sharp');
 
 const SRC = '/opt/ani/images';
-const OUT = '/opt/ani/thumbs';
-const W = 600, H = 800;
+const OUT = process.argv[2] || '/opt/ani/thumbs';
+const W = 400, H = 600;
 
 async function main() {
   fs.mkdirSync(OUT, { recursive: true });
