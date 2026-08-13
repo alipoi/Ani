@@ -135,13 +135,4 @@ const i18n = createI18n({
   fallbackWarn: false
 })
 
-export function seasonLabel(sn) {
-  return i18n.global.tm('season')[sn] || sn
-}
-export function dayName(i) {
-  return i18n.global.tm('days')[i] || ''
-}
-export function dayNameSun(i) {
-  return i18n.global.tm('daysSun')[i] || ''
-}
 export default i18n

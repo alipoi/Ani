@@ -1,5 +1,4 @@
 import { ref } from 'vue'
-import { dayName } from './i18n'
 
 export function currentSeasonNow() {
   const d = new Date()
@@ -30,10 +29,4 @@ export function goSeason(d) {
   }
   if (calYear.value > now.getFullYear()) calYear.value = now.getFullYear()
   if (calYear.value < 2016) calYear.value = 2016
-}
-
-export function calendarWeekLabel() {
-  const out = []
-  for (let i = 0; i < 7; i++) out.push(dayName(i))
-  return out
 }

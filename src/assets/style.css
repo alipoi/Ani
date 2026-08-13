@@ -571,18 +571,6 @@ html.dark .day-nav-btn.on:hover { background: rgba(34, 197, 94, .18); color: #4a
   border-radius: var(--radius) var(--radius) 0 0;
   box-shadow: var(--shadow);
 }
-.search-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  grid-auto-flow: dense;
-  gap: 12px;
-  padding: 16px 18px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-top: none;
-  border-radius: 0 0 var(--radius) var(--radius);
-  box-shadow: var(--shadow);
-}
 .search-empty { padding: 14px 18px; }
 
 .day-section:nth-child(1) { animation-delay: .02s; }
@@ -1268,7 +1256,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 @media (max-width: 700px) {
   /* 资源页/字幕组页统计条移动端隐藏（信息冗余） */
   .res-stats { display: none; }
-  .card-list, .search-cards { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding: 14px; }
+  .card-list { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding: 14px; }
   .res-table-head, .res-row { grid-template-columns: 1fr 80px 116px; gap: 8px; padding: 9px 12px; }
   .res-time { display: none; }
   .res-table-head :nth-child(3) { display: none; }
@@ -1312,7 +1300,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 }
 
 @media (max-width: 460px) {
-  .card-list, .search-cards { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; padding: 12px; }
+  .card-list { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; padding: 12px; }
 .card-title { min-height: 44px; padding: 8px 10px; }
 .card-title span { font-size: 11px; }
   .card-score { font-size: 10px; padding: 1px 5px; }
