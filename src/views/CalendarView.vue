@@ -9,6 +9,7 @@ import { overlayOpen, overlayData } from '../globals'
 import { thumbPath } from '../utils'
 import { loadSeasonMeta, bgMeta, searchMeta } from '../bgmeta'
 import ResourceRow from '../components/ResourceRow.vue'
+import Pager from '../components/Pager.vue'
 
 const { t, tm } = useI18n()
 const route = useRoute()
@@ -69,26 +70,30 @@ watch(() => (route.query.q || '').toString(), (q) => { if (q !== searchQuery.val
 const searchList = ref(null)
 const searchLoading = ref(false)
 const searchTotal = ref(0)
-const searchCount = computed(() => {
-  const n = searchList.value ? searchList.value.length : 0
-  return searchTotal.value > n ? searchTotal.value + '+' : (searchTotal.value || n)
-})
-watch(term, (q) => {
-  if (!q) { searchList.value = null; searchLoading.value = false; searchTotal.value = 0; return }
+const SEARCH_PAGE_SIZE = 42
+const searchPage = ref(1)
+const searchPages = computed(() => Math.max(1, Math.ceil(searchTotal.value / SEARCH_PAGE_SIZE)))
+function runSearch() {
+  const q = term.value
+  if (!q) { searchList.value = null; searchTotal.value = 0; searchPage.value = 1; return }
   searchLoading.value = true
-  apiGet(API.anime(q))
+  apiGet(API.anime(q, searchPage.value))
     .then((d) => {
+      const t = (d && d.total) || 0
+      if (t > 0 && d.page && d.page !== searchPage.value) { searchPage.value = d.page; return }
       const list = ((d && d.list) || []).map((x) => {
         const sk = skFromDate(x.date)
         bgMeta.set(sk + ':' + x.id, searchMeta(x))
         return Object.assign({}, x, { seasonKey: sk, coverImage: x.cover })
       })
-      searchTotal.value = (d && d.total) || 0
+      searchTotal.value = t
       searchList.value = list
     })
     .catch(() => { searchList.value = [] })
     .finally(() => { searchLoading.value = false })
-}, { immediate: true })
+}
+watch(term, () => { if (searchPage.value !== 1) searchPage.value = 1; else runSearch() }, { immediate: true })
+watch(searchPage, () => { if (term.value) runSearch() })
 
 const SEASON_MM = { '01': 'winter', '02': 'winter', '03': 'winter', '04': 'spring', '05': 'spring', '06': 'spring', '07': 'summer', '08': 'summer', '09': 'summer', '10': 'fall', '11': 'fall', '12': 'fall' }
 const SK_MONTH = { winter: '01', spring: '04', summer: '07', fall: '10' }
@@ -348,7 +353,7 @@ onBeforeUnmount(() => {
       <div v-else id="list">
         <div v-if="term" class="search-block">
           <div class="search-block-h">
-            {{ t('statsSearch', { q: term }) }}<span v-if="searchList && searchList.length" v-html="t('resCount', { n: searchCount })"></span>
+            {{ t('statsSearch', { q: term }) }}<span v-if="searchList && searchList.length" v-html="t('resCount', { n: searchTotal })"></span><span v-if="searchPages > 1 && searchList && searchList.length" class="search-page-of">{{ t('searchPageOf', { p: searchPage, pg: searchPages }) }}</span>
           </div>
           <div v-if="searchLoading" class="loading"><span class="spinner"></span>{{ t('loading') }}</div>
           <div v-else-if="searchList && !searchList.length" class="empty show search-empty">{{ t('emptyBangumi') }}</div>
@@ -361,6 +366,7 @@ onBeforeUnmount(() => {
               <div class="card-title" @click="openSearchCard(m)"><span>{{ m.title }}</span></div>
             </div>
           </div>
+          <Pager v-if="searchPages > 1 && searchList && searchList.length" :page="searchPage" :pages="searchPages" @go="searchPage = $event" />
         </div>
         <div v-for="(day, i) in weekdays" v-if="!term" :key="day.label" class="day-section" :class="{ nodata: !day.items.length }" :data-wi="i">
           <template v-if="day.items.length">

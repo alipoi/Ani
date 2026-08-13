@@ -11,5 +11,5 @@ export const API = {
   group: (name, page, size, q) => '/api/group/' + encodeURIComponent(name) + '?page=' + page + '&size=' + (size || 30) + (q ? '&q=' + encodeURIComponent(q) : ''),
   bangumi: (key, id) => '/api/resources/bangumi?key=' + encodeURIComponent(key) + '&id=' + encodeURIComponent(id) + '&size=10',
   hash: (h) => '/api/resources/hash/' + h,
-  anime: (q) => '/api/anime/search?q=' + encodeURIComponent(q)
+  anime: (q, page) => '/api/anime/search?q=' + encodeURIComponent(q) + (page && page > 1 ? '&p=' + page : '')
 }
