@@ -1385,7 +1385,6 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   overflow: hidden;
   line-height: 1.45;
   word-break: break-all;
-  min-width: 0;
   cursor: pointer;
 }
 
@@ -1473,13 +1472,6 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
   }
   .res-size, .res-time { display: none; }
   .res-row .res-actions { position: absolute; right: 12px; bottom: 10px; }
-  .res-row.mini { padding: 8px 12px; }
-  .res-row.mini .res-title {
-    -webkit-line-clamp: unset;
-    white-space: normal;
-    display: block;
-    overflow: visible;
-  }
   /* 资源详情页按钮：主按钮占满一行，次按钮并排 */
   .res-main > .res-actions .btn-primary { flex: 1 1 100%; }
   .res-main > .res-actions .btn-secondary { flex: 1 1 auto; }
@@ -1697,10 +1689,19 @@ grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
 }
 
 .res-row.mini .res-title {
-  min-width: 0;
   -webkit-line-clamp: 1;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+/* 移动端同番资源(mini)行：覆盖上面的单行截断，改为正常换行（置于基础规则之后以保证生效） */
+@media (max-width: 700px) {
+  .res-row.mini .res-title {
+    -webkit-line-clamp: unset;
+    white-space: normal;
+    display: block;
+    overflow: visible;
+  }
 }
 
 .res-more {
