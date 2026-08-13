@@ -66,7 +66,7 @@ watch(() => route.fullPath, load, { immediate: true })
 
 <template>
   <div>
-    <main class="main">
+    <main class="main classic-main">
       <div v-if="loading" class="loading"><span class="spinner"></span>{{ t('loading') }}</div>
       <div v-else-if="err" class="empty show">{{ t('loadErr') }}</div>
       <div v-else-if="!list.length" class="empty show">{{ t('noRes') }}</div>

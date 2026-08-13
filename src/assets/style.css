@@ -412,6 +412,8 @@ html.dark .day-nav-btn.on:hover { background: rgba(34, 197, 94, .18); color: #4a
   padding: 24px 0 40px;
 }
 
+.classic-main { width: min(1100px, 100% - 2 * clamp(8px, 2.5vw, 32px)); }
+
 /* 日历页工具条（年份/季度选择） */
 .cal-toolbar {
   width: min(1100px, 100% - clamp(16px, 3vw, 40px));
@@ -1854,7 +1856,7 @@ html.dark ::-webkit-scrollbar-thumb { background: color-mix(in srgb, #ff6b9d 55%
 @media (min-width: 1200px) {
   .header { padding: 0; }
   .header-inner,
-  .day-layout, .cal-toolbar, .res-page {
+  .day-layout, .cal-toolbar, .res-page, .classic-main {
     width: min(1280px, 100% - 2 * clamp(8px, 2.5vw, 32px));
   }
   .day-layout, .header-inner { --pad: max(8px, calc(88px - 50% + min(640px, 50% - clamp(8px, 2.5vw, 32px)))); }
@@ -1862,6 +1864,7 @@ html.dark ::-webkit-scrollbar-thumb { background: color-mix(in srgb, #ff6b9d 55%
   .day-layout { padding: 0 var(--pad); }
   .day-layout > .main { width: 100%; }
   .res-page { --pad: max(8px, calc(88px - 50% + min(640px, 50% - clamp(8px, 2.5vw, 32px)))); padding: 16px var(--pad) 56px; }
+  .classic-main { --pad: max(8px, calc(88px - 50% + min(640px, 50% - clamp(8px, 2.5vw, 32px)))); padding: 24px var(--pad) 40px; }
   .card-title span { font-size: 13px; }
   .day-nav {
     position: fixed;
@@ -1874,12 +1877,13 @@ html.dark ::-webkit-scrollbar-thumb { background: color-mix(in srgb, #ff6b9d 55%
 }
 @media (min-width: 1536px) {
   .header-inner,
-  .day-layout, .cal-toolbar, .res-page {
+  .day-layout, .cal-toolbar, .res-page, .classic-main {
     width: min(1536px, 100% - 2 * clamp(8px, 2.5vw, 32px));
   }
   .day-layout, .header-inner { --pad: max(8px, calc(88px - 50% + min(768px, 50% - clamp(8px, 2.5vw, 32px)))); }
   .day-nav { left: max(8px, calc(50% - min(768px, 50% - clamp(8px, 2.5vw, 32px)) - 115px)); }
   .res-page { --pad: max(8px, calc(88px - 50% + min(768px, 50% - clamp(8px, 2.5vw, 32px)))); }
+  .classic-main { --pad: max(8px, calc(88px - 50% + min(768px, 50% - clamp(8px, 2.5vw, 32px)))); }
 }
 @media (min-width: 641px) {
   .card-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
