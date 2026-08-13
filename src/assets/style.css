@@ -438,7 +438,8 @@ html.dark .day-nav-btn.on:hover { background: rgba(34, 197, 94, .18); color: #4a
   flex-wrap: wrap;
   min-width: 0;
 }
-.stats-bar .stats-icon { font-size: 15px; }
+.stats-bar .stats-icon { font-size: 15px; display: inline-flex; align-items: center; }
+.stats-bar .stats-icon svg { width: 13px; height: 13px; }
 .stats-bar .stats-num {
   background: var(--primary);
   color: #fff;
@@ -1755,6 +1756,10 @@ grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
 }
 
 .btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+
+.btn-primary svg, .btn-secondary svg { width: 14px; height: 14px; flex: none; }
+.ctx-item svg { width: 14px; height: 14px; flex: none; }
+.res-title-copy svg { width: 14px; height: 14px; }
 
 .res-images {
   display: grid;

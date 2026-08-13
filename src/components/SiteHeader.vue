@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { theme, setTheme } from '../theme'
@@ -26,12 +26,15 @@ let searchTimer = null
 function onSearchInput() {
   clearTimeout(searchTimer)
   searchTimer = setTimeout(() => {
-    searchQuery.value = searchValue.value
     const q = searchValue.value.trim()
-    const base = route.path
-    router.replace(q ? base + '?q=' + encodeURIComponent(q) : base)
+    searchQuery.value = q
+    router.push(q ? { path: '/classic', query: { q } } : '/classic')
   }, 250)
 }
+
+watch(() => route.query.q, (q) => {
+  searchValue.value = typeof q === 'string' ? q : ''
+})
 
 const themeTitle = computed(() => {
   if (theme.value === 'dark') return t('themeDark')
