@@ -175,6 +175,27 @@ function scrollNavTo(wi) {
   nav.scrollTo({ left: Math.max(0, c), behavior: 'smooth' })
 }
 
+function layoutTop(s) {
+  const p = s.offsetParent
+  let y = s.offsetTop
+  if (p && p !== document.body) y += p.getBoundingClientRect().top + window.scrollY
+  return y
+}
+
+function stickyOffset() {
+  const header = document.querySelector('.header')
+  let h = header ? header.offsetHeight : 0
+  if (window.matchMedia('(max-width: 640px)').matches) {
+    const nav = document.querySelector('.day-nav')
+    if (nav) h += nav.offsetHeight
+  }
+  return h
+}
+
+function scrollToLayoutY(y) {
+  window.scrollTo({ top: Math.max(0, y - stickyOffset()), behavior: 'smooth' })
+}
+
 function scrollToDay(wi) {
   activeDay.value = wi
   document.activeElement && document.activeElement.blur()
@@ -183,7 +204,7 @@ function scrollToDay(wi) {
   for (const s of sections) {
     if (s.dataset.wi === String(wi)) {
       s.classList.add('current')
-      s.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      scrollToLayoutY(layoutTop(s) - (window.innerHeight - s.offsetHeight) / 2)
       scrollNavTo(wi)
       return
     }
@@ -298,7 +319,7 @@ function scrollToToday() {
   for (const s of sections) {
     if (s.dataset.wi === String(todayWi)) {
       s.classList.add('current')
-      setTimeout((el) => { el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, 100, s)
+      scrollToLayoutY(layoutTop(s))
       scrollNavTo(todayWi)
       return
     }
