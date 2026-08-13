@@ -294,7 +294,7 @@ onBeforeUnmount(() => {
       <div v-else id="list">
         <div v-for="(day, i) in weekdays" :key="day.label" class="day-section" :data-wi="i">
           <template v-if="day.items.length">
-            <div class="day-h">{{ day.label }}<span class="day-count">{{ day.items.length }}</span><span v-if="isCurrentSeason" class="day-date">{{ day.date }}<b v-if="day.isToday">（今天）</b></span></div>
+            <div class="day-h">{{ day.label }}<span v-if="isCurrentSeason" class="day-date">{{ day.date }}<b v-if="day.isToday">（今天）</b></span></div>
             <div class="card-list">
               <template v-for="a in day.items" :key="a.id">
                 <div class="card" :data-id="a.id" :class="{ on: expandedId === a.id }">
