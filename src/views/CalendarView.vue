@@ -161,6 +161,8 @@ const navDays = computed(() => {
 
 const activeDay = ref(todayWi)
 
+try { history.scrollRestoration = 'manual' } catch (e) {}
+
 const isCurrentSeason = computed(() => {
   const now = currentSeasonNow()
   return seasonKey(calYear.value, calSeason.value) === seasonKey(now.y, now.s)
@@ -192,8 +194,32 @@ function stickyOffset() {
   return h
 }
 
+let animTimer = 0
 function scrollToLayoutY(y) {
-  window.scrollTo({ top: Math.max(0, y - stickyOffset()), behavior: 'smooth' })
+  clearTimeout(animTimer)
+  const startY = window.scrollY
+  const dist = y - startY
+  if (Math.abs(dist) < 1) return
+  const dur = 380
+  const t0 = performance.now()
+  const ease = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
+  const step = () => {
+    const p = Math.min(1, (performance.now() - t0) / dur)
+    window.scrollTo(0, Math.round(startY + dist * ease(p)))
+    if (p < 1) animTimer = setTimeout(step, 16)
+    else { scrollSnap(); setTimeout(scrollSnap, 900) }
+  }
+  animTimer = setTimeout(step, 16)
+}
+
+function scrollSnap() {
+  setTimeout(() => {
+    const s = document.querySelector('.day-section.current')
+    if (!s) return
+    const off = stickyOffset()
+    const diff = s.getBoundingClientRect().top - off
+    if (Math.abs(diff) > 8) window.scrollTo(0, window.scrollY + Math.round(diff))
+  }, 32)
 }
 
 function scrollToDay(wi) {
@@ -327,7 +353,8 @@ function scrollToToday() {
 }
 
 watch([calYear, calSeason], load)
-watch(filtered, () => { requestAnimationFrame(scrollToToday) }, { flush: 'post' })
+watch(loading, (v) => { if (!v) scrollToToday() }, { flush: 'post' })
+watch(filtered, () => { scrollToToday() }, { flush: 'post' })
 watch(() => route.path, (p) => {
   const m = p.match(/^\/(\d{4})(\d{2})\/?$/)
   if (m) {
