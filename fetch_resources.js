@@ -122,6 +122,7 @@ function decodeEntities(s) {
     .replace(/&#(\d+);/g, function(m, d) { return String.fromCharCode(parseInt(d, 10)); })
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
+    .replace(/[\u200B\u200C\u200D\uFEFF\u2060\u00AD]/g, '')
     .trim();
 }
 
@@ -132,6 +133,7 @@ function strip(s) {
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#x27;/g, "'")
     .replace(/&nbsp;/g, ' ').replace(/&#\d+;/g, '')
+    .replace(/[\u200B\u200C\u200D\uFEFF\u2060\u00AD]/g, '')
     .trim();
 }
 

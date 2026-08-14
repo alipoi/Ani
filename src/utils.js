@@ -52,7 +52,7 @@ export const NON_GROUP_TAGS = /^(?:搬运|转载|分流|更新|重压|合集|全
 
 export function groupTagHTML(r) {
   const field = r.subtitle_group || ''
-  const title = r.title || ''
+  const title = (r.title || '').replace(/[\u200B\u200C\u200D\uFEFF\u2060\u00AD]/g, '')
   let tag = null, tagStart = 0, tagEnd = 0
   if (field) {
     const re = new RegExp('(?:\\[' + escRe(field) + '\\]|【' + escRe(field) + '】)')
