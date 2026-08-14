@@ -19,7 +19,8 @@ var types = {
   '.gif': 'image/gif',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
-  '.xsl': 'application/xml'
+  '.xsl': 'application/xml',
+  '.webp': 'image/webp'
 };
 
 // Cache duration in seconds for different file types
@@ -33,6 +34,7 @@ var cacheDuration = {
   '.js': 0,
   '.css': 0,
   '.json': 0,
+  '.webp': 86400 * 30,
   '.html': 0
 };
 
@@ -93,7 +95,7 @@ var server = http.createServer(function(req, res) {
     .replace(/\x00SLASH\x00/g, '%2F')
     .replace(/:/g, '\uFF1A');
   // 图片/季度数据/favicon 始终从项目根目录服务；其余（构建产物）从 dist 服务
-  var base = (!hasDist || /^\/(images|data)\//.test(urlPath) || /^\/favicon\.(png|ico)$/.test(urlPath)) ? root : staticRoot;
+  var base = (!hasDist || /^\/(images|thumbs|data)\//.test(urlPath) || /^\/favicon\.(png|ico)$/.test(urlPath)) ? root : staticRoot;
   var filePath = path.join(base, urlPath === '/' ? 'index.html' : urlPath);
   filePath = path.resolve(filePath);
 
@@ -201,6 +203,38 @@ function handleAPI(req, res) {
     return true;
   }
 
+  // GET /api/resources/torrent/:hash  代理下载种子（不暴露第三方源，24h 缓存）
+  var torMatch = urlPath.match(/^\/api\/resources\/torrent\/([0-9a-fA-F]{40})$/);
+  if (torMatch && req.method === 'GET') {
+    var torItem = db.byHash(torMatch[1]);
+    if (!torItem || !torItem.torrent_url) { writeJSON(req, res, 404, { error: 'not found' }); return true; }
+    if (serveTorrent(torItem, res)) return true;
+    fetch(torItem.torrent_url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36',
+        'Accept': '*/*',
+        'Referer': 'https://mikanani.me/'
+      },
+      signal: AbortSignal.timeout(30000)
+    })
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.arrayBuffer();
+      })
+      .then(function(ab) {
+        var tBuf = Buffer.from(ab);
+        if (tBuf.length <= 5 * 1024 * 1024) {
+          torrentCache[torItem.info_hash] = tBuf;
+          if (Object.keys(torrentCache).length >= 200) torrentCache = {};
+        }
+        res.setHeader('Content-Type', 'application/x-bittorrent');
+        res.setHeader('Content-Disposition', torrentDisposition(torItem.title));
+        res.end(tBuf);
+      })
+      .catch(function(e) { console.error('torrent-proxy-fail', torItem.info_hash, e && e.message); writeJSON(req, res, 502, { error: 'torrent fetch failed' }); });
+    return true;
+  }
+
   // GET /api/resources/hash/:hash
   var hashMatch = urlPath.match(/^\/api\/resources\/hash\/([0-9a-fA-F]{40})$/);
   if (hashMatch) {
@@ -255,6 +289,149 @@ function handleAPI(req, res) {
       }
     }
     writeJSON(req, res, 200, gdata);
+    return true;
+  }
+
+  // --- anime full-text index (built from bgm v0 browse enumeration) ---
+  var ANIME_INDEX = null;
+  function loadAnimeIndex() {
+    try {
+      var p = path.join(root, 'anime_index.json');
+      if (!fs.existsSync(p)) { console.log('anime index file not found:', p); return; }
+      var arr = JSON.parse(fs.readFileSync(p, 'utf8'));
+      ANIME_INDEX = arr;
+      console.log('anime index loaded:', arr.length, 'subjects,', (fs.statSync(p).size / 1048576).toFixed(1), 'MB');
+    } catch (e) { console.log('anime index load failed:', e.message); }
+  }
+  loadAnimeIndex();
+
+  function searchAnimeIndex(kw, page) {
+    var needle = String(kw).trim().toLowerCase();
+    var pg = parseInt(page, 10) || 1;
+    if (pg < 1) pg = 1;
+    if (!needle) return { list: [], total: 0, page: 1, pages: 0 };
+    var hits = [];
+    var arr = ANIME_INDEX;
+    for (var i = 0; i < arr.length; i++) {
+      var r = arr[i];
+      if (r[1].toLowerCase().indexOf(needle) !== -1 || r[2].toLowerCase().indexOf(needle) !== -1) hits.push(r);
+    }
+    hits.sort(function(a, b) {
+      var ae = (a[1].toLowerCase() === needle || a[2].toLowerCase() === needle) ? 1 : 0;
+      var be = (b[1].toLowerCase() === needle || b[2].toLowerCase() === needle) ? 1 : 0;
+      if (ae !== be) return be - ae;
+      if (b[7] !== a[7]) return b[7] - a[7];
+      return b[5] - a[5];
+    });
+    var size = 42;
+    var pages = Math.max(1, Math.ceil(hits.length / size));
+    if (pg > pages) pg = pages;
+    var list = hits.slice((pg - 1) * size, pg * size).map(function(r) {
+      return {
+        id: r[0],
+        title: r[1],
+        titleJp: r[2],
+        date: r[3],
+        platform: r[4],
+        score: Math.round(r[5] * 10) / 10,
+        eps: r[6],
+        cover: r[8],
+        weekday: '',
+        tags: []
+      };
+    });
+    return { list: list, total: hits.length, page: pg, pages: pages };
+  }
+
+  // GET /api/anime/search?q=  (global anime search via bangumi, mirrors anibt)
+  if (urlPath === '/api/anime/search' && req.method === 'GET') {
+    var akw = q('q');
+    if (!akw) { writeJSON(req, res, 400, { error: 'missing q' }); return true; }
+    var apage = parseInt(q('p'), 10) || 1;
+    if (apage < 1) apage = 1;
+    var acached = getCachedSearchResult('anime:' + akw + ':' + apage);
+    if (acached) {
+      writeJSON(req, res, 200, acached);
+      return true;
+    }
+    if (ANIME_INDEX && ANIME_INDEX.length) {
+      var ih = searchAnimeIndex(akw, apage);
+      var ilist = ih.list;
+      (async function () {
+        var iaIdx = 0;
+        var iLimit = Math.min(ilist.length, 20);
+        async function iworker() {
+          while (iaIdx < iLimit) {
+            var it = ilist[iaIdx++];
+            try {
+              var subj = await fetch('https://bgmapi.072139.xyz/v0/subjects/' + it.id, { signal: AbortSignal.timeout(15000) }).then(function(r) { return r.json(); });
+              if (subj && subj.id) {
+                if (subj.rating && subj.rating.score) it.score = Number(subj.rating.score.toFixed(1));
+                it.tags = ((subj.meta_tags && subj.meta_tags.length) ? subj.meta_tags : (subj.tags || []).map(function(t) { return t.name; })).slice(0, 8);
+                if (subj.platform && !it.platform) it.platform = subj.platform;
+                if (subj.total_episodes && !it.eps) it.eps = subj.total_episodes;
+                if (subj.date && !it.date) it.date = subj.date;
+                if (!it.cover && subj.images && subj.images.large) {
+                  try { it.cover = 'https://bgmimg.072139.xyz/' + new URL(subj.images.large).pathname.replace(/^\//, ''); } catch (e) {}
+                }
+              }
+            } catch (e) {}
+          }
+        }
+        var iaWorkers = [];
+        for (var iaw = 0; iaw < 6; iaw++) iaWorkers.push(iworker());
+        await Promise.all(iaWorkers);
+        var ipayload = { list: ilist, total: ih.total, page: ih.page, pages: ih.pages };
+        cacheSearchResult('anime:' + akw + ':' + apage, ipayload);
+        writeJSON(req, res, 200, ipayload);
+      })();
+      return true;
+    }
+    fetch('https://bgmapi.072139.xyz/search/subject/' + encodeURIComponent(akw) + '?type=2&responseGroup=large&max_results=25', { signal: AbortSignal.timeout(20000) })
+      .then(function(r) { return r.json(); })
+      .then(async function(j) {
+        var raw = (j && j.list) || [];
+        var out = [];
+        var seen = {};
+        raw.forEach(function(s) {
+          if (!s || !s.id || seen[s.id] || !(s.name || s.name_cn)) return;
+          seen[s.id] = true;
+          var cover = '';
+          if (s.images && s.images.large) {
+            try { cover = 'https://bgmimg.072139.xyz/' + new URL(s.images.large).pathname.replace(/^\//, ''); } catch (e) {}
+          }
+          out.push({ id: s.id, title: s.name_cn || s.name, titleJp: s.name, cover: cover, date: s.air_date || '', score: (s.rating && s.rating.score) ? Number(s.rating.score) : 0, weekday: s.air_weekday || '' });
+        });
+        var aIdx = 0;
+        async function worker() {
+          while (aIdx < out.length) {
+            var it = out[aIdx++];
+            try {
+              var subj = await fetch('https://bgmapi.072139.xyz/v0/subjects/' + it.id, { signal: AbortSignal.timeout(15000) }).then(function(r) { return r.json(); });
+              if (subj && subj.id) {
+                if (subj.rating && subj.rating.score) it.score = Number(subj.rating.score.toFixed(1));
+                it.platform = subj.platform || '';
+                it.eps = subj.total_episodes || subj.eps || 0;
+                it.tags = ((subj.meta_tags && subj.meta_tags.length) ? subj.meta_tags : (subj.tags || []).map(function(t) { return t.name; })).slice(0, 8);
+                if (subj.date && !it.date) it.date = subj.date;
+                if (!it.cover && subj.images && subj.images.large) {
+                  try { it.cover = 'https://bgmimg.072139.xyz/' + new URL(subj.images.large).pathname.replace(/^\//, ''); } catch (e) {}
+                }
+              }
+            } catch (e) {}
+          }
+        }
+        var aWorkers = [];
+        for (var aw = 0; aw < 6; aw++) aWorkers.push(worker());
+        await Promise.all(aWorkers);
+        var apayload = { list: out };
+        cacheSearchResult('anime:' + akw, apayload);
+        writeJSON(req, res, 200, apayload);
+        return;
+      })
+      .catch(function(err) {
+        writeJSON(req, res, 502, { error: 'upstream failed' });
+      });
     return true;
   }
 
@@ -438,6 +615,22 @@ function cachedRss(key, build) {
 
 // 搜索结果内存缓存（10 分钟 TTL）：无索引 LIKE 全表扫较慢，重复搜索直接命中
 var resourceCache = {};
+// 种子文件内存缓存（24h TTL）：代理下载后缓存，避免反复请求第三方
+var torrentCache = {};
+function torrentDisposition(title) {
+  var fName = String(title || 'download').slice(0, 120).replace(/["\\\r\n]/g, '').replace(/\.torrent$/i, '') + '.torrent';
+  return 'attachment; filename="download.torrent"; filename*=UTF-8\'\'' + encodeURIComponent(fName);
+}
+function serveTorrent(item, res) {
+  var buf = torrentCache[item.info_hash];
+  if (buf) {
+    res.setHeader('Content-Type', 'application/x-bittorrent');
+    res.setHeader('Content-Disposition', torrentDisposition(item.title));
+    res.end(buf);
+    return true;
+  }
+  return false;
+}
 function cachedResource(key, build) {
   var c = resourceCache[key];
   if (c && Date.now() - c.t < 600000) return c.payload;
@@ -457,8 +650,9 @@ function buildRssFeed(channelLink, channelTitle, list) {
   list.forEach(function(r) {
     var magnet = magnetWithMyTrackers(r.magnet);
     if (!magnet && !r.torrent_url) return;
-    var encUrl = magnet || r.torrent_url;
-    var detailUrl = channelLink.replace(/^(https?:\/\/[^\/]+)\/.*$/, '$1') + '/res/' + r.info_hash;
+    var base = channelLink.replace(/^(https?:\/\/[^\/]+)\/.*$/, '$1');
+    var encUrl = magnet || base + '/api/resources/torrent/' + r.info_hash;
+    var detailUrl = base + '/res/' + r.info_hash;
     xml += '<item><title>' + esc(r.title) + '</title>' +
       '<link>' + esc(detailUrl) + '</link>' +
       '<guid isPermaLink="true">' + esc(detailUrl) + '</guid>' +
