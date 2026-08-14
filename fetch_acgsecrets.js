@@ -45,6 +45,20 @@ var ROLE_MAP = {
 
 function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 
+// JST(+9) -> 北京时间(+8)：30 小时制/跨天都按减 60 分钟处理，输出「每周X N时M分」
+var WK_IDX = { '一': 0, '二': 1, '三': 2, '四': 3, '五': 4, '六': 5, '日': 6, '天': 6 };
+var WK_NAME = ['一', '二', '三', '四', '五', '六', '日'];
+var BJ_LINE_RE = /每[週周]([一二三四五六日天])\s*(深夜)?\s*(\d{1,2})[時时](\d{1,2})分/g;
+function toBjBeijing(line) {
+  return line.replace(BJ_LINE_RE, function(full, wdCn, deep, hS, mS) {
+    var abs = WK_IDX[wdCn] * 1440 + parseInt(hS, 10) * 60 + parseInt(mS, 10) - 60;
+    if (abs < 0) abs += 7 * 1440;
+    var nW = Math.floor(abs / 1440) % 7;
+    var rest = abs % 1440;
+    return '每周' + WK_NAME[nW] + ' ' + Math.floor(rest / 60) + '时' + (rest % 60) + '分';
+  });
+}
+
 // --refresh：给已有条目补上站点后来才公布的时间/星期信息（仅当本地缺失时升级，
 // 已有时间的条目绝不覆盖，保护手工修正）
 function upgradeSchedule(existing, fresh) {
@@ -59,7 +73,7 @@ function upgradeSchedule(existing, fresh) {
     if (!/[時时]\d{1,2}分/.test(cur)) {
       var m = nw.match(/播出[：:][^\n]*/);
       if (m && /[時时]\d{1,2}分/.test(m[0])) {
-        var freshLine = m[0];
+        var freshLine = toBjBeijing(m[0]);
         e.content = /播出[：:]/.test(cur)
           ? cur.replace(/播出[：:][^\n]*/, freshLine)
           : freshLine + '\n' + cur;
@@ -180,7 +194,7 @@ function parseBlock(block) {
   var contentLines = [];
 
   if (timeStr) {
-    contentLines.push('播出：' + timeStr.replace(/／/g, ' '));
+    contentLines.push('播出：' + toBjBeijing(timeStr.replace(/／/g, ' ')));
   }
 
   var staffStartIdx = block.indexOf('製作人員');

@@ -43,12 +43,16 @@ export function imgPath(a) {
   if (!a || !a.title) return ''
   return '/images/' + a.seasonKey + '/' + encodeURI(imgName(a.title)) + '.jpg'
 }
+export function thumbPath(a) {
+  if (!a || !a.title) return ''
+  return '/thumbs/' + a.seasonKey + '/' + encodeURI(imgName(a.title)) + '.webp'
+}
 
 export const NON_GROUP_TAGS = /^(?:搬运|转载|分流|更新|重压|合集|全集|完结合集|1080p|2160p|4k|720p|1080i|bdrip|bdr\.?ip|webr?ip|webdl|bluray|hd|hdtv|hevc|avc|aac|flac|opus|h\.?264|h\.?265|10bit|8bit|x264|x265|chs|cht|gb|big5|简|繁|简繁|简体内嵌|繁体内嵌|简繁内封|简繁中字|中字|字幕|内嵌|内封|外挂|多国字幕|无字幕|mp4|mkv|ts|wmv|web|tv|sp|ova|ona|bd|dvd|新番|旧番|国漫|日漫|剧场版|真|修正|v\d|ep\d+|第\d+话|第\d+集|s\d+e?\d+|season\d+|vol\.?\d+|part\d+)$/i
 
 export function groupTagHTML(r) {
   const field = r.subtitle_group || ''
-  const title = r.title || ''
+  const title = (r.title || '').replace(/[\u200B\u200C\u200D\uFEFF\u2060\u00AD]/g, '')
   let tag = null, tagStart = 0, tagEnd = 0
   if (field) {
     const re = new RegExp('(?:\\[' + escRe(field) + '\\]|【' + escRe(field) + '】)')
