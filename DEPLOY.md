@@ -39,6 +39,7 @@ ls /opt/ani-backup            # 每日备份（保留 7 天）
 
 | 操作 | 命令 |
 |---|---|
+| 一键同步代码（拉 origin master 并部署） | `sudo bash /opt/ani/deploy/sync.sh`（详见 [`deploy/SYNC.md`](deploy/SYNC.md)） |
 | 看服务日志 | `journalctl -u ani -f` |
 | 重启 | `sudo systemctl restart ani` |
 | 快速增量（cron 每 2 分钟） | `sudo -u ani node /opt/ani/fetch_resources.js --fast` |
