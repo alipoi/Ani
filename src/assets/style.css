@@ -1842,11 +1842,10 @@ grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
 .res-page-back { padding: 6px 16px; }
 .res-layout {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
+  grid-template-columns: 300px minmax(0, 720px);
   gap: 32px;
   align-items: start;
-  max-width: 1080px;
-  margin: 0 auto;
+  justify-content: center;
   padding: 8px 0;
 }
 .res-poster { position: sticky; top: 16px; }
