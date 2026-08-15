@@ -24,8 +24,12 @@ DIRTY=$(git status --porcelain | grep -v '^??' || true)
 if [ -n "$DIRTY" ]; then
   echo "!! 存在未提交改动，将被丢弃："
   echo "$DIRTY"
-  read -r -p "   继续丢弃并同步? [y/N] " ans
-  [[ "$ans" =~ ^[Yy]$ ]] || { echo "已取消。"; exit 1; }
+  if [ -t 0 ]; then
+    read -r -p "   继续丢弃并同步? [y/N] " ans
+    [[ "$ans" =~ ^[Yy]$ ]] || { echo "已取消。"; exit 1; }
+  else
+    echo "   非交互模式，自动继续（如不想丢弃请取消）"
+  fi
 fi
 
 echo "==> 拉取 origin"
