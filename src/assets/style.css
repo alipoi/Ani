@@ -1923,13 +1923,14 @@ html.dark ::-webkit-scrollbar-thumb { background: color-mix(in srgb, #ff6b9d 55%
 @media (min-width: 1200px) {
   .header { padding: 0; }
   .header-inner,
-  .day-layout, .cal-toolbar, .res-page, .classic-main {
+  .day-layout, .cal-toolbar, .res-page, .classic-main, .main {
     width: min(1280px, 100% - 2 * clamp(8px, 2.5vw, 32px));
   }
   .day-layout, .header-inner { --pad: max(8px, calc(88px - 50% + min(640px, 50% - clamp(8px, 2.5vw, 32px)))); }
   .header-inner { padding: 12px var(--pad); }
   .day-layout { padding: 0 var(--pad); }
-  .day-layout > .main { width: 100%; }
+  .day-layout > .main { width: 100%; padding: 24px 0 40px; }
+  .main { --pad: max(8px, calc(88px - 50% + min(640px, 50% - clamp(8px, 2.5vw, 32px)))); padding: 24px var(--pad) 40px; }
   .res-page { --pad: max(8px, calc(88px - 50% + min(640px, 50% - clamp(8px, 2.5vw, 32px)))); padding: 16px var(--pad) 56px; }
   .classic-main { --pad: max(8px, calc(88px - 50% + min(640px, 50% - clamp(8px, 2.5vw, 32px)))); padding: 24px var(--pad) 40px; }
   .card-title span { font-size: 13px; }
@@ -1944,11 +1945,12 @@ html.dark ::-webkit-scrollbar-thumb { background: color-mix(in srgb, #ff6b9d 55%
 }
 @media (min-width: 1536px) {
   .header-inner,
-  .day-layout, .cal-toolbar, .res-page, .classic-main {
+  .day-layout, .cal-toolbar, .res-page, .classic-main, .main {
     width: min(1536px, 100% - 2 * clamp(8px, 2.5vw, 32px));
   }
   .day-layout, .header-inner { --pad: max(8px, calc(88px - 50% + min(768px, 50% - clamp(8px, 2.5vw, 32px)))); }
   .day-nav { left: max(8px, calc(50% - min(768px, 50% - clamp(8px, 2.5vw, 32px)) - 115px)); }
+  .main { --pad: max(8px, calc(88px - 50% + min(768px, 50% - clamp(8px, 2.5vw, 32px)))); }
   .res-page { --pad: max(8px, calc(88px - 50% + min(768px, 50% - clamp(8px, 2.5vw, 32px)))); }
   .classic-main { --pad: max(8px, calc(88px - 50% + min(768px, 50% - clamp(8px, 2.5vw, 32px)))); }
 }
