@@ -1465,7 +1465,7 @@ html.dark .overlay { background: rgba(0,0,0,.65); }
 .res-copied { font-size: 13px; font-weight: 700; color: var(--primary); }
 .res-row.mini .res-actions { justify-self: end; }
 
-.res-main { display: contents; }
+.res-row > .res-main { display: contents; }
 .res-sub { display: none; }
 
 /* 移动端资源行：anibt 风格（标题吃满宽度，组别·大小·时间副行，图标贴右下角，不显示图片） */
