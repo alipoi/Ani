@@ -1842,12 +1842,15 @@ grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
 .res-page-back { padding: 6px 16px; }
 .res-layout {
   display: grid;
-  grid-template-columns: 300px minmax(0, 720px);
+  grid-template-columns: 300px minmax(0, 1fr);
   gap: 32px;
   align-items: start;
-  justify-content: center;
   padding: 8px 0;
 }
+.res-head .res-detail-top { margin: 0 0 12px; }
+.res-head .res-detail-title { font-size: 20px; font-weight: 800; line-height: 1.5; }
+.res-head .res-meta { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; }
+.res-head .res-meta .detail-badge { font-size: 13px; }
 .res-poster { position: sticky; top: 16px; }
 .res-poster > img {
   width: 100%;
@@ -1865,7 +1868,7 @@ grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
   cursor: zoom-in;
 }
 .res-main { min-width: 0; }
-.res-main .res-detail-title { font-size: 19px; font-weight: 800; line-height: 1.5; }
+.res-main .res-actions { margin-top: 0; }
 .res-page-related { margin-top: 28px; border-top: 1px solid var(--border); padding-top: 16px; }
 .res-page-h { font-size: 15px; font-weight: 600; margin-bottom: 10px; color: var(--text); }
 @media (max-width: 760px) {
