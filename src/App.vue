@@ -70,7 +70,7 @@ watch(() => overlayOpen.value, (v) => {
     <SiteHeader />
     <router-view />
     <footer class="site-footer">
-      <span>
+      <span v-if="route.path === '/'">
         <a target="_blank" rel="noopener" href="https://beian.miit.gov.cn">粤ICP备2026014899号</a>
         <span class="sep">|</span>
         <a target="_blank" rel="noopener" href="https://beian.mps.gov.cn/#/query/webSearch?code=44011802001279">粤公网安备44011802001279号</a>
