@@ -393,13 +393,15 @@ var CN_NUM = { 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, �
 
 function seasonOfTitle(s) {
   s = s || '';
-  var m =     s.match(/第\s*([1-9]\d*)\s*[季期]/) ||
-    s.match(/第\s*([一二三四五六七八九十]+)\s*[季期]/) ||
+  var m =     s.match(/第\s*([1-9]\d*)\s*[季期クール]/) ||
+    s.match(/第\s*([一二三四五六七八九十]+)\s*[季期クール]/) ||
     s.match(/[Ss]eason\s*0*([1-9]\d*)\b|[Ss]eason\s*([ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]+)/i) ||
     s.match(/[Ss]\s*0*([1-9]\d*)(?=[Ee]|$|\s|[-–—/[({])/) ||
     s.match(/([1-9]\d*)\s*(?:st|nd|rd|th)\s*[Ss]eason/) ||
     s.match(/([1-9]\d*)\s*[季期]\b/);
   if (m) return /^[一二三四五六七八九十]+$/.test(m[1]) ? (CN_NUM[m[1]] || null) : +m[1];
+  var pa = s.match(/\b[Pp]art\s*0*([1-9]\d*)\b/);
+  if (pa) return +pa[1];
   var r = s.match(/([ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]+)\s*$/);
   if (r) return ROMAN[r[1]] || null;
   var h = s.match(/([IVXLCDM]{2,6})(?:\s*$|[\s\-–—/\[(])/);
@@ -438,7 +440,8 @@ function matchAll(bangumi, items) {
     { from: '神之水滴', to: '神之雫' },
     { from: '骸骨骑士大人异世界冒险中', to: '骸骨骑士大人奇幻世界冒险中' },
     { from: '女性向游戏世界对路人角色很不友好', to: '乙女游戏世界对路人角色很不友好' },
-    { from: '女性向游戏世界对路人角色很不友好', to: '恋爱游戏世界对路人角色很不友好' }
+    { from: '女性向游戏世界对路人角色很不友好', to: '恋爱游戏世界对路人角色很不友好' },
+    { from: '真铠甲圣斗士', to: '铠真传' }
   ];
 
   // build per-bangumi search keys: titleJp (boundary, strong), full cn title (weak),

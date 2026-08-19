@@ -31,9 +31,17 @@ export default defineConfig({
             }
           },
           {
-            urlPattern: ({ url }) => url.pathname.startsWith('/api/') || url.pathname.startsWith('/images/') || url.pathname.startsWith('/thumbs/'),
+            urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              networkTimeoutSeconds: 5
+            }
+          },
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/images/') || url.pathname.startsWith('/thumbs/'),
             handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'api-cache' }
+            options: { cacheName: 'img-cache' }
           }
         ]
       }
