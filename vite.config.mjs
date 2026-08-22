@@ -19,6 +19,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,jpg,woff2}'],
+        globIgnores: ['**/cn2t-*.js'],
         navigateFallback: 'index.html',
         navigateFallbackDenylist: [/^\/rss\//, /^\/api\//],
         runtimeCaching: [

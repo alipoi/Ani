@@ -7,6 +7,7 @@ import { calYear, calSeason, seasonKey, currentSeasonNow } from '../calendar'
 import { searchQuery } from '../search'
 import { overlayOpen, overlayData } from '../globals'
 import { thumbPath } from '../utils'
+import { tt } from '../tconv'
 import { loadSeasonMeta, bgMeta, searchMeta } from '../bgmeta'
 import ResourceRow from '../components/ResourceRow.vue'
 import Pager from '../components/Pager.vue'
@@ -422,14 +423,14 @@ onBeforeUnmount(() => {
                 <span v-if="scoreOf(m)" class="card-score">{{ scoreOf(m) }}</span>
                 <span v-if="m.date" class="air-badge">{{ fmtSeasonDate(m.date) }}</span>
               </div>
-              <div class="card-title" @click="openSearchCard(m)"><span>{{ m.title }}</span></div>
+              <div class="card-title" @click="openSearchCard(m)"><span>{{ tt(m.title) }}</span></div>
             </div>
           </div>
           <Pager v-if="searchPages > 1 && searchList && searchList.length" :page="searchPage" :pages="searchPages" @go="searchPage = $event" />
         </div>
         <div v-for="(day, i) in weekdays" v-if="!term" :key="day.label" class="day-section" :class="{ nodata: !day.items.length }" :data-wi="i">
           <template v-if="day.items.length">
-            <div class="day-h">{{ day.label }}<span v-if="isCurrentSeason" class="day-date">{{ day.date }}<b v-if="day.isToday">（今天）</b></span></div>
+            <div class="day-h">{{ day.label }}<span v-if="isCurrentSeason" class="day-date">{{ day.date }}<b v-if="day.isToday">（{{ t('today') }}）</b></span></div>
             <div class="card-list">
               <template v-for="a in day.items" :key="a.id">
                 <div class="card" :data-id="a.id" :class="{ on: expandedId === a.id }">
@@ -445,7 +446,7 @@ onBeforeUnmount(() => {
                       </b>
                     </span>
                   </div>
-                  <div class="card-title" @click="openDetail(a)"><span>{{ a.title }}</span></div>
+                  <div class="card-title" @click="openDetail(a)"><span>{{ tt(a.title) }}</span></div>
                 </div>
                 <div v-if="expandedId === a.id" class="expand-panel" data-testid="anime-expansion-panel">
                   <button class="expand-close" :aria-label="t('collapse')" :title="t('collapse')" @click="expandedId = null">✕</button>
@@ -455,7 +456,7 @@ onBeforeUnmount(() => {
                   <div class="expand-head">
                     <div class="expand-cover" :style="panelCoverStyle(a)"></div>
                     <div class="expand-info">
-                      <div class="expand-title" :title="a.title">{{ a.title }}</div>
+                      <div class="expand-title" :title="tt(a.title)">{{ tt(a.title) }}</div>
                       <div v-if="a.titleJp" class="expand-title-jp">{{ a.titleJp }}</div>
                       <div v-if="metaOf(a)" class="expand-badges">
                         <span v-if="fmtPlatform(metaOf(a).platform)" class="expand-badge">{{ fmtPlatform(metaOf(a).platform) }}</span>

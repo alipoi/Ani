@@ -3,6 +3,7 @@ import { computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { overlayOpen, overlayData, lightboxOpen, lightboxSrc } from '../globals'
 import { esc, imgPath } from '../utils'
+import { tt } from '../tconv'
 import { bgMeta, loadMetaFor } from '../bgmeta'
 
 const { t } = useI18n()
@@ -94,7 +95,7 @@ watch(overlayOpen, (open) => {
             </a>
           </div>
           <div class="detail-info">
-            <div class="detail-title">{{ overlayData.a.title }}</div>
+            <div class="detail-title">{{ tt(overlayData.a.title) }}</div>
             <div v-if="overlayData.a.titleJp" class="detail-title-jp">{{ overlayData.a.titleJp }}</div>
             <div v-if="meta" class="detail-meta">
               <div class="detail-meta-line">
