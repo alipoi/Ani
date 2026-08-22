@@ -1,7 +1,8 @@
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import i18n from './i18n'
 
 const ready = ref(false)
+const isHant = computed(() => i18n.global.locale.value === 'zh-Hant')
 let conv = null
 let pending = null
 
@@ -15,10 +16,9 @@ function load() {
     .catch(() => { pending = null })
 }
 
-watch(() => i18n.global.locale.value, (l) => { if (l === 'zh-Hant') load() }, { immediate: true })
+watch(isHant, (v) => { if (v) load() }, { immediate: true })
 
 export function tt(s) {
-  if (s == null) return s
-  s = String(s)
-  return ready.value && conv ? conv(s) : s
+  if (s == null || !isHant.value || !ready.value || !conv) return s == null ? s : String(s)
+  return conv(String(s))
 }
